@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import getKupong from ('./src/puppeteer.js');
+import getKupong from './puppeteer.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
