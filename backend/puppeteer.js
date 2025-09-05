@@ -1,11 +1,10 @@
 
-
-const pup = require ('puppeteer');
+import puppeteer from 'puppeteer';
 
 async function getKupong(){
   let browser;
   try {
-    browser = await pup.launch();
+    browser = await puppeteer.launch();
     const page = await browser.newPage();
     console.log("Öppnar sidan...");
     await page.goto('https://spela.svenskaspel.se/stryktipset', { waitUntil: 'networkidle0' });

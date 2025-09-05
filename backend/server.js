@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-const getKupong = require('./src/puppeteer.js');
+import express from 'express';
+import cors from 'cors';
+import getKupong from ('./src/puppeteer.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
