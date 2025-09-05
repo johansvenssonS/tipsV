@@ -3,9 +3,11 @@ import cors from 'cors';
 import getKupong from './puppeteer.js';
 
 const app = express();
+const allowedOrigins = ['https://johansvenssons.github.io'];
+app.use(cors({
+  origin: allowedOrigins
+}));
 const PORT = process.env.PORT || 3000;
-
-app.use(cors());
 
 app.get('/kupong', async (req, res) => {
   try {
