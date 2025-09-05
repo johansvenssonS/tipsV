@@ -5,9 +5,14 @@ export default class Kupong extends HTMLElement {
     this.kupong = [];
   }
   async connectedCallback() {
-    const response = await fetch('https://tipsv.onrender.com/kupong');
-    const data = await response.json();
-    this.kupong = data.kupong || [];
+    try {
+      const response = await fetch('https://tipsv.onrender.com/kupong');
+      const data = await response.json();
+      this.kupong = data.kupong || [];
+      this.render();
+    } catch (error) {
+      console.error('något gick fel:', error);
+    }
     this.render();
   }
 
