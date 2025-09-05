@@ -6,9 +6,8 @@ export default class Kupong extends HTMLElement {
   }
   async connectedCallback() {
     const response = await fetch('https://tipsv.onrender.com/kupong');
-    const matcher = await response.json();
-    this.kupong = matcher.kupong;
-    console.log(this.kupong) || [];
+    const data = await response.json();
+    this.kupong = data.kupong || [];
     this.render();
   }
 
