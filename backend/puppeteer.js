@@ -2,9 +2,12 @@
 import puppeteer from 'puppeteer';
 
 async function getKupong(){
+  console.log("inne i funktionen");
   let browser;
   try {
-    browser = await puppeteer.launch();
+    browser = await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
     const page = await browser.newPage();
     console.log("Öppnar sidan...");
     await page.goto('https://spela.svenskaspel.se/stryktipset', { waitUntil: 'networkidle0' });

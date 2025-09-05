@@ -9,9 +9,10 @@ export default class Kupong extends HTMLElement {
       const response = await fetch('https://tipsv.onrender.com/kupong');
       const data = await response.json();
       this.kupong = data.kupong || [];
-      this.render();
+      console.log(this.kupong);
     } catch (error) {
       console.error('något gick fel:', error);
+      this.kupong = [];
     }
     this.render();
   }
