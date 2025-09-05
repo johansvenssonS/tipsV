@@ -1,4 +1,3 @@
-import getKupong from './puppeteer.js';
 
 export default class Kupong extends HTMLElement {
   constructor() {
@@ -6,7 +5,10 @@ export default class Kupong extends HTMLElement {
     this.kupong = [];
   }
   async connectedCallback() {
-    this.kupong = await getKupong();
+    const response = await fetch('https://tipsv.onrender.com/kupong');
+    const matcher = await response.json();
+    this.kupong = matcher.kupong;
+    console.log(this.kupong) || [];
     this.render();
   }
 
