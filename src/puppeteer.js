@@ -14,6 +14,7 @@ async function getKupong(){
       return elements.map(elements => elements.textContent.trim());
     });
     console.log(matcher);
+    return matcher;
     //matcher är en array med strings
   } catch (error) {
     console.log("Något blev fel:", error);
@@ -23,9 +24,7 @@ async function getKupong(){
     }
   }
 }
-module.exports = {
-  getKupong
-}
+export default getKupong;
 // matcher console.log
 // Öppnar sidan...
 // Sidan är öppnad
