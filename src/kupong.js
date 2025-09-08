@@ -5,6 +5,18 @@ export default class Kupong extends HTMLElement {
     this.kupong = [];
   }
   async connectedCallback() {
+    const today = new Date();
+    const day = today.getDay();
+    if (day !== 4) { // 4 är torsdag 
+      const response = await fetch('https://tipsv.onrender.com/not_thursday');
+      const data = await response.json();
+      this.kupong = data.kupong || [];
+      console.log("det är inte torsdag, använder testdata");
+      this.render();
+      return;
+    } else {
+      console.log("det är torsdag, hämtar riktig kupong");
+    }
     try {
       const response = await fetch('https://tipsv.onrender.com/kupong');
       const data = await response.json();
