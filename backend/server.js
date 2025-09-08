@@ -3,7 +3,10 @@ import cors from 'cors';
 import getKupong from './puppeteer.js';
 
 const app = express();
-const allowedOrigins = ['https://johansvenssons.github.io'];
+const allowedOrigins = [
+  'https://johansvenssons.github.io',
+  'http://127.0.0.1:3000'
+];
 app.use(cors({
   origin: allowedOrigins
 }));
