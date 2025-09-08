@@ -28,7 +28,7 @@ async function getKupong(){
 }
 
 function not_thursday(){
-  test_data = [
+  const test_data = [
     '1Irland - Ungern1X2Tipsinfo1X2Svenska folket44%28%28%Odds2,653,252,95',
     '2Bolton - Wimbledon1X2Tipsinfo1X2Svenska folket66%20%14%Odds1,584,105,80',
     '3Doncaster - Bradford1X2Tipsinfo1X2Svenska folket43%25%32%Odds2,283,453,10',
@@ -46,7 +46,7 @@ function not_thursday(){
   ]
   const today = new Date();
   const day = today.getDay();
-  if (day !== 4) { // 4 represents Thursday
+  if (day !== 4) { // 4 är torsdag 
     return test_data;
   }
 }

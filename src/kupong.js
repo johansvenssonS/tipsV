@@ -15,9 +15,7 @@ export default class Kupong extends HTMLElement {
       this.render();
       return;
     } else {
-      console.log("det är torsdag, hämtar riktig kupong");
-    }
-    try {
+      try {
       const response = await fetch('https://tipsv.onrender.com/kupong');
       const data = await response.json();
       this.kupong = data.kupong || [];
@@ -26,6 +24,8 @@ export default class Kupong extends HTMLElement {
       console.error('något gick fel:', error);
       this.kupong = [];
     }
+    }
+    
     this.render();
   }
 
