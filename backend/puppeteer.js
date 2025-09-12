@@ -6,14 +6,13 @@ async function getKupong(){
   let browser;
   try {
     try {//chrome problem med render.com 
-      await puppeteer.executablePath();
-    } catch (error) {
       console.log("Chrome not found, installing...");
       execSync('npx puppeteer browsers install chrome', { stdio: 'inherit' });
+      } catch (error) {
+      console.log("Chrome installation failed:", error.message);
     }
     browser = await puppeteer.launch({
       headless: 'new',
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
