@@ -20,6 +20,7 @@ async function getKupong(){
     //matcher är en array med strings
   } catch (error) {
     console.log("Något blev fel:", error);
+    return [];
   }finally {
     if (browser) {
       await browser.close();

@@ -33,10 +33,15 @@ app.get('/kupong', async (req, res) => {
   const day = today.getDay();
 
   try {
-      if (day !== 4 || day === 5 || day === 6) { // om det är torsdag, fredag eller lördag
-      const kupong = await getKupong();
-      await saveKupong(kupong);
-      res.json({ kupong });
+    let kupong;
+    if (day !== 4 || day === 5 || day === 6) { // om det är torsdag, fredag eller lördag
+      kupong = await getKupong();
+      if (kupong) {
+        await saveKupong(kupong);
+        res.json({ kupong });
+      } else {
+        res.status(500).json({ error: 'Kunde inte hämta kupongen' });
+      }
     } else {
       const lastData = await loadKupong();
       if (lastData) {
