@@ -1,10 +1,16 @@
 
+import { execSync } from 'child_process';
 import puppeteer from 'puppeteer';
 
 async function getKupong(){
-  console.log("inne i funktionen");
   let browser;
   try {
+    try {//chrome problem med render.com 
+      await puppeteer.executablePath();
+    } catch (error) {
+      console.log("Chrome not found, installing...");
+      execSync('npx puppeteer browsers install chrome', { stdio: 'inherit' });
+    }
     browser = await puppeteer.launch({
       headless: 'new',
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath(),
