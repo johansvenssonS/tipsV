@@ -1,4 +1,3 @@
-
 import { execSync } from 'child_process';
 import puppeteer from 'puppeteer';
 
@@ -8,9 +7,10 @@ async function getKupong(){
     try {//chrome problem med render.com 
       console.log("Chrome not found, installing...");
       execSync('npx puppeteer browsers install chrome', { stdio: 'inherit' });
-      } catch (error) {
+    } catch (error) {
       console.log("Chrome installation failed:", error.message);
     }
+    
     browser = await puppeteer.launch({
       headless: 'new',
       args: [
@@ -23,20 +23,34 @@ async function getKupong(){
         '--single-process'
       ]
     });
+    
     const page = await browser.newPage();
+    
+    // Set a longer timeout and faster loading strategy
+    page.setDefaultTimeout(60000); // 60 seconds instead of 30
+    page.setDefaultNavigationTimeout(60000);
+    
     console.log("Öppnar sidan...");
-    await page.goto('https://spela.svenskaspel.se/stryktipset', { waitUntil: 'networkidle0' });
+    await page.goto('https://spela.svenskaspel.se/stryktipset', { 
+      waitUntil: 'domcontentloaded', // Faster than 'networkidle0'
+      timeout: 60000 
+    });
+    
     console.log("Sidan är öppnad");
+    
+    // Wait for the specific element to be available
+    await page.waitForSelector('ol.coupon-rows li', { timeout: 30000 });
+    
     const matcher = await page.$$eval('ol.coupon-rows li', elements => {
       return elements.map(elements => elements.textContent.trim());
     });
+    
     console.log(matcher);
     return matcher;
-    //matcher är en array med strings
   } catch (error) {
     console.log("Något blev fel:", error);
     return [];
-  }finally {
+  } finally {
     if (browser) {
       await browser.close();
     }
