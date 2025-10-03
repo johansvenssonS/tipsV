@@ -32,11 +32,19 @@ app.get("/kupong", async (req, res) => {
     let kupong = await loadKupongFromDb(week, year);
     if (!kupong) {
       kupong = await getKupong();
-      if (kupong) {
+      if (kupong && kupong.length > 0) {
         await saveKupongToDb(kupong, week, year);
         res.json({ kupong });
       } else {
-        res.status(500).json({ error: "Kunde inte hämta kupongen" });
+        const prevKupong = await loadKupongFromDb(week - 1, year);
+        if (prevKupong) {
+          res.json({
+            kupong: prevKupong,
+            info: "Showing last week's kupong due to scrape timeout",
+          });
+        } else {
+          res.status(500).json({ error: "Kunde inte hämta kupongen" });
+        }
       }
     } else {
       res.json({ kupong });

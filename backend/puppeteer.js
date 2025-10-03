@@ -39,7 +39,7 @@ async function getKupong() {
     console.log("Öppnar sidan...");
     await page.goto("https://spela.svenskaspel.se/stryktipset", {
       waitUntil: "networkidle2",
-      timeout: 60000,
+      timeout: 120000,
     });
 
     console.log("Sidan är öppnad");
