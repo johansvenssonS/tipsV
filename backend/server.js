@@ -1,74 +1,50 @@
-import express from 'express';
-import cors from 'cors';
-import getKupong from './puppeteer.js';
-import fs from 'fs/promises';
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import getKupong from "./puppeteer.js";
+import { saveKupongToDb, loadKupongFromDb } from "./kupong-db.js";
 
-
-const DATA_FILE = './lastKupong.json';
 const app = express();
 const allowedOrigins = [
-  'https://johansvenssons.github.io',
-  'http://127.0.0.1:3000'
+  "https://johansvenssons.github.io",
+  "http://127.0.0.1:3000",
 ];
-app.use(cors({
-  origin: allowedOrigins
-}));
-const PORT = process.env.PORT || 3000;
+app.use(cors({ origin: allowedOrigins }));
 
-async function saveKupong(data) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data), 'utf8');
+// Helper function to get ISO week number
+function getWeekNumber(date) {
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
 
-async function loadKupong(){
-  try {
-    const data = await fs.readFile(DATA_FILE, 'utf8');
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-app.get('/kupong', async (req, res) => {
+// /kupong endpoint
+app.get("/kupong", async (req, res) => {
   const today = new Date();
-  const day = today.getDay();
+  const week = getWeekNumber(today);
+  const year = today.getFullYear();
 
   try {
-    let kupong;
-    if (day !== 4 || day === 5 || day === 6) { // om det är torsdag, fredag eller lördag
+    let kupong = await loadKupongFromDb(week, year);
+    if (!kupong) {
       kupong = await getKupong();
       if (kupong) {
-        await saveKupong(kupong);
+        await saveKupongToDb(kupong, week, year);
         res.json({ kupong });
       } else {
-        res.status(500).json({ error: 'Kunde inte hämta kupongen' });
+        res.status(500).json({ error: "Kunde inte hämta kupongen" });
       }
     } else {
-      const lastData = await loadKupong();
-      if (lastData) {
-        res.json({ kupong: lastData }); // skicka den senaste kupongen om den finns
-      } else {
-        const kupong = await getKupong();
-        await saveKupong(kupong);
-        res.json({ kupong });
-      }
+      res.json({ kupong });
     }
   } catch (error) {
-    res.status(500).json({ error: 'Något gick fel vid hämtning av kupong', details: error.message });
+    res.status(500).json({
+      error: "Något gick fel vid hämtning av kupong",
+      details: error.message,
+    });
   }
-});
-// app.get('/not_thursday', async (req, res) => {
-//   try {
-//     const kupong = not_thursday();
-//     res.json({ kupong });
-//   } catch (error) {
-//     res.status(500).json({ error: 'Något gick fel vid hämtning av kupong', details: error.message });
-//   }
-// });
-
-app.get('/', (req, res) => {
-  res.send('StrykVänner backend server är igång!');
-});
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
 });
