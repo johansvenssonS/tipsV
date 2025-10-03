@@ -48,3 +48,13 @@ app.get("/kupong", async (req, res) => {
     });
   }
 });
+app.get("/", (req, res) => {
+  res.send("StrykVänner backend server är igång!");
+});
+
+// Use the Render-provided port or 3000 if running locally
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
