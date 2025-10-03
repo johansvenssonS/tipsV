@@ -13,18 +13,18 @@ export default class Kupong extends HTMLElement {
         <span>Hämtar Kupong...</span>
     </div>
 </div>`;
-      try {
-      const response = await fetch('https://tipsv.onrender.com/kupong');
+    try {
+      const response = await fetch("https://tipsv.onrender.com/kupong");
       const data = await response.json();
       this.kupong = data.kupong || [];
       console.log(this.kupong);
     } catch (error) {
-      console.error('något gick fel:', error);
+      console.error("något gick fel:", error);
       this.kupong = [];
     }
     this.render();
   }
-  
+
   render() {
     let fixadData = this.kupong.map(this.fixData);
     this.innerHTML = `
@@ -40,36 +40,38 @@ export default class Kupong extends HTMLElement {
             </tr>
           </thead>
           <tbody>
-            ${fixadData.map((team, i) =>
-              `<tr>
+            ${fixadData
+              .map(
+                (team, i) =>
+                  `<tr>
                 <td class="border px-2 py-1 whitespace-nowrap">${team}</td>
                 <td class="border px-2 py-1"><button class="outline-btn" data-row="${i}" data-col="1"></button></td>
                 <td class="border px-2 py-1"><button class="outline-btn" data-row="${i}" data-col="X"></button></td>
                 <td class="border px-2 py-1"><button class="outline-btn" data-row="${i}" data-col="2"></button></td>
               </tr>`
-            ).join('')}
+              )
+              .join("")}
           </tbody>
         </table>
       </div>
     `;
-    
-    this.querySelectorAll('.outline-btn').forEach(btn => {
-      btn.addEventListener('click', function() {
-        btn.classList.toggle('checked');
-        btn.innerHTML = btn.classList.contains('checked') ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>' : '';
+
+    this.querySelectorAll(".outline-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        btn.classList.toggle("checked");
+        btn.innerHTML = btn.classList.contains("checked")
+          ? '<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>'
+          : "";
       });
     });
     return this;
   }
   fixData(kupong) {
-    const strings = String(kupong);
-    const noNumbers = strings.replace(/^\d+/, '');
-    const teamNames = noNumbers.split('1')[0].trim()
-    console.log(teamNames);
+    const str = String(kupong).replace(/^\d+\s*/, "");
+    const teamNames = str.split("1X2")[0].trim();
     return teamNames;
   }
 }
-
 
 // matcher console.log
 // Öppnar sidan...
@@ -91,7 +93,7 @@ export default class Kupong extends HTMLElement {
 // ]
 
 // Add styles for outline-btn and checked state
-const style = document.createElement('style');
+const style = document.createElement("style");
 style.textContent = `
   .outline-btn {
     width: 28px;

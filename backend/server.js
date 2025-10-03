@@ -42,9 +42,10 @@ app.get("/kupong", async (req, res) => {
       res.json({ kupong });
     }
   } catch (error) {
+    console.error("kupong error:", error);
     res.status(500).json({
       error: "Något gick fel vid hämtning av kupong",
-      details: error.message,
+      details: error.message || String(error),
     });
   }
 });

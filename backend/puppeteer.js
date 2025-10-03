@@ -1,50 +1,51 @@
-import { execSync } from 'child_process';
-import puppeteer from 'puppeteer';
+import { execSync } from "child_process";
+import puppeteer from "puppeteer";
 
-async function getKupong(){
+async function getKupong() {
   let browser;
   try {
-    try {//chrome problem med render.com 
+    try {
+      //chrome problem med render.com
       console.log("Chrome not found, installing...");
-      execSync('npx puppeteer browsers install chrome', { stdio: 'inherit' });
+      execSync("npx puppeteer browsers install chrome", { stdio: "inherit" });
     } catch (error) {
       console.log("Chrome installation failed:", error.message);
     }
-    
+
     browser = await puppeteer.launch({
-      headless: 'new',
+      headless: "new",
       args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process'
-      ]
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--no-first-run",
+        "--no-zygote",
+        "--single-process",
+      ],
     });
-    
+
     const page = await browser.newPage();
-    
+
     // Set a longer timeout and faster loading strategy
     page.setDefaultTimeout(60000); // 60 seconds instead of 30
     page.setDefaultNavigationTimeout(60000);
-    
+
     console.log("Öppnar sidan...");
-    await page.goto('https://spela.svenskaspel.se/stryktipset', { 
-      waitUntil: 'domcontentloaded', // Faster than 'networkidle0'
-      timeout: 60000 
+    await page.goto("https://spela.svenskaspel.se/stryktipset", {
+      waitUntil: "domcontentloaded", // Faster than 'networkidle0'
+      timeout: 60000,
     });
-    
+
     console.log("Sidan är öppnad");
-    
+
     // Wait for the specific element to be available
-    await page.waitForSelector('ol.coupon-rows li', { timeout: 30000 });
-    
-    const matcher = await page.$$eval('ol.coupon-rows li', elements => {
-      return elements.map(elements => elements.textContent.trim());
+    await page.waitForSelector("ol.coupon-rows li", { timeout: 30000 });
+
+    const matcher = await page.$$eval("ol.coupon-rows li", (elements) => {
+      return elements.map((elements) => elements.textContent.trim());
     });
-    
+
     console.log(matcher);
     return matcher;
   } catch (error) {
@@ -77,11 +78,9 @@ export default getKupong;
 //   ]
 //   const today = new Date();
 //   const day = today.getDay();
-//   if (day !== 4) { // 4 är torsdag 
+//   if (day !== 4) { // 4 är torsdag
 //     return test_data;
 //   }
-
-
 
 // export { not_thursday };
 // matcher console.log
