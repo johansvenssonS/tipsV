@@ -22,10 +22,15 @@ async function getKupong() {
         "--no-first-run",
         "--no-zygote",
         "--single-process",
+        "--disable-blink-features=AutomationControlled",
+        "--window-size=1920,1080",
       ],
     });
 
     const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
+    );
 
     // Set a longer timeout and faster loading strategy
     page.setDefaultTimeout(60000); // 60 seconds instead of 30
@@ -33,7 +38,7 @@ async function getKupong() {
 
     console.log("Öppnar sidan...");
     await page.goto("https://spela.svenskaspel.se/stryktipset", {
-      waitUntil: "domcontentloaded", // Faster than 'networkidle0'
+      waitUntil: "networkidle2",
       timeout: 60000,
     });
 
