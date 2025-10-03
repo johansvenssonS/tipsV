@@ -27,7 +27,32 @@ app.get("/kupong", async (req, res) => {
   const today = new Date();
   const week = getWeekNumber(today);
   const year = today.getFullYear();
+  // Get day and hour
+  const day = today.getDay(); // 4 = Thursday
+  const hours = today.getHours();
 
+  // If before Thursday 00:00, always show last week's kupong
+  if (day < 4 || (day === 4 && hours < 12)) {
+    // Calculate last week (handle week 1/year rollover if needed)
+    let lastWeek = week - 1;
+    let lastYear = year;
+    if (lastWeek <= 0) {
+      lastWeek = 52; // Or use ISO weeks helper
+      lastYear = year - 1;
+    }
+    const prevKupong = await loadKupongFromDb(lastWeek, lastYear);
+    if (prevKupong) {
+      res.json({
+        kupong: prevKupong,
+        info: "Showing last week's kupong (new kupong not released yet)",
+      });
+      return;
+    } else {
+      res.status(404).json({ error: "Ingen kupong förra veckan." });
+      return;
+    }
+  }
+  /// kollar veckan för datan i databasen
   try {
     let kupong = await loadKupongFromDb(week, year);
     if (!kupong) {
