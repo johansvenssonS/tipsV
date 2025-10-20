@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import getKupong from "./puppeteer.js";
-import { saveKupongToDb, loadKupongFromDb } from "./kupong-db.js";
+import { saveKupongToDb, loadKupongFromDb, getLastEntry } from "./kupong-db.js";
 
 const app = express();
 const allowedOrigins = [
@@ -27,58 +27,45 @@ app.get("/kupong", async (req, res) => {
   const today = new Date();
   const week = getWeekNumber(today);
   const year = today.getFullYear();
-  // Get day and hour
   const day = today.getDay(); // 4 = Thursday
   const hours = today.getHours();
 
-  // If before Thursday 00:00, always show last week's kupong
-  if (day < 4 || (day === 4 && hours < 12)) {
-    // Calculate last week (handle week 1/year rollover if needed)
-    let lastWeek = week - 1;
-    let lastYear = year;
-    if (lastWeek <= 0) {
-      lastWeek = 52; // Or use ISO weeks helper
-      lastYear = year - 1;
-    }
-    const prevKupong = await loadKupongFromDb(lastWeek, lastYear);
-    if (prevKupong) {
-      res.json({
-        kupong: prevKupong,
-        info: "Showing last week's kupong (new kupong not released yet)",
-      });
-      return;
-    } else {
-      res.status(404).json({ error: "Ingen kupong förra veckan." });
-      return;
-    }
-  }
-  /// kollar veckan för datan i databasen
   try {
+    // First, check if current week's kupong exists
     let kupong = await loadKupongFromDb(week, year);
-    if (!kupong) {
+
+    if (kupong) {
+      // Current week found, return it
+      res.json({ kupong });
+      return;
+    }
+
+    // No current week - decide whether to scrape or show last entry
+    if (day >= 4 && hours >= 12) {
+      // After Thursday 12:00 - try scraping new kupong
       kupong = await getKupong();
       if (kupong && kupong.length > 0) {
         await saveKupongToDb(kupong, week, year);
         res.json({ kupong });
-      } else {
-        const prevKupong = await loadKupongFromDb(week - 1, year);
-        if (prevKupong) {
-          res.json({
-            kupong: prevKupong,
-            info: "Showing last week's kupong due to scrape timeout",
-          });
-        } else {
-          res.status(500).json({ error: "Kunde inte hämta kupongen" });
-        }
+        return;
       }
+    }
+
+    // Before Thursday 12:00 OR scraping failed - get last entry
+    const lastKupong = await getLastEntry(); // New function
+    if (lastKupong) {
+      res.json({
+        kupong: lastKupong.data,
+        info: `Showing kupong from week ${lastKupong.week}/${lastKupong.year}`,
+      });
     } else {
-      res.json({ kupong });
+      res.status(500).json({ error: "Ingen kupong tillgänglig" });
     }
   } catch (error) {
     console.error("kupong error:", error);
     res.status(500).json({
       error: "Något gick fel vid hämtning av kupong",
-      details: error.stack || error.message || String(error),
+      details: error.message,
     });
   }
 });

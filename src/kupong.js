@@ -28,7 +28,7 @@ export default class Kupong extends HTMLElement {
   render() {
     let fixadData = this.kupong.map(this.fixData);
     this.innerHTML = `
-      <h2 class="text-xl font-bold mb-2 text-center">Här är kupongen</h2>
+      <h2 class="text-xl font-bold mb-2 text-center">Veckans Kupong</h2>
       <div class="flex-start justify-center items-center">
         <table class="w-auto max-w-md bg-white rounded shadow border border-gray-200 text-sm mx-auto">
           <thead>
@@ -53,7 +53,12 @@ export default class Kupong extends HTMLElement {
               .join("")}
           </tbody>
         </table>
+        <button class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded">
+  Lämna in kupong
+  <button>
       </div>
+      
+
     `;
 
     this.querySelectorAll(".outline-btn").forEach((btn) => {

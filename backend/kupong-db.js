@@ -17,3 +17,27 @@ export async function loadKupongFromDb(week, year) {
   );
   return res.rows[0]?.data || null;
 }
+
+export async function getLastEntry() {
+  const query = `
+  SELECT data, week, year
+  FROM weekly_kupong
+  ORDER BY year DESC, week DESC
+  LIMIT 1
+  `;
+
+  try {
+    const res = await pool.query(query);
+    if (res.rows.length > 0) {
+      return {
+        data: res.rows[0].data,
+        week: res.rows[0].week,
+        year: res.rows[0].year,
+      };
+    }
+    return null;
+  } catch (error) {
+    console.error("Error med att ladda senaste entry:", error);
+    return null;
+  }
+}
