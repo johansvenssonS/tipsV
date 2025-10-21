@@ -6,13 +6,13 @@ export default class Router extends HTMLElement {
 
     this.allRoutes = {
       "": {
-        view: "<home-screen></home-screen>",
-        subject: "Main-menu",
+        view: "<landing-view></landing-view",
+        subject: "Landing-screen",
       },
-      // "packlist": {
-      //     view: "<packlist-view></packlist-view>",
-      //     name: "Plocklista",
-      // },
+      team: {
+        view: "<team-view></team-view>",
+        name: "team-screen",
+      },
     };
   }
 

@@ -337,3 +337,10 @@ li {
     max-width: none;
   }
 }
+
+.Fbox {
+  background-color: #b91010;
+  padding: 10px;
+  border: 2px solid black;
+  border-radius: 8px;
+}

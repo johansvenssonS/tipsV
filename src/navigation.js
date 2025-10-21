@@ -18,6 +18,6 @@ export default class Navigation extends HTMLElement {
       navigationLinks += `<a href='#${path}'>${routes[path].name}</a>`;
     }
 
-    this.innerHTML = `<nav>${navigationLinks}</nav>`;
+    // this.innerHTML = `<nav>${navigationLinks}</nav>`;
   }
 }
