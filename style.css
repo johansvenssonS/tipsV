@@ -22,22 +22,28 @@ body {
 }
 
 .nav {
+  padding: 0 40px 20px 40px;
+}
+
+.logo {
   display: flex;
-  justify-content: space-between;
-  padding: 10px;
-  gap: 20px;
-  padding: 10px 40px 10px 40px;
+  justify-content: center;
+  align-items: center;
 }
 
 .links {
   display: flex;
   justify-content: space-around;
-  gap: 100px;
+  gap: 300px;
   padding: 10px;
+  background: linear-gradient(135deg, #e6e1e1 0%, #ebb1b1 100%);
+  border-bottom: 3px solid black;
+  border-radius: 8px;
 }
 .aLink {
-  display: flex;
   color: black;
+  font-family: fantasy;
+  font-size: 1.6rem;
 }
 
 .loading-container {
@@ -73,22 +79,24 @@ main {
   gap: 50px;
   padding: 0 40px 0 40px;
   justify-content: space-around;
-  align-items: stretch;
-  min-height: 500px;
 }
 
-/* Kupong component */
-.kupong-container {
+my-kupong {
+  flex-basis: 0;
   flex-grow: 1;
   flex-shrink: 1;
-  flex-basis: 0;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+/* Kupong component */
+.kupong-container {
   padding: 20px;
   border-radius: 8px;
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   border-right: 5px solid red;
   border-top: 5px solid red;
   border-bottom: 5px solid red;
+  height: 100%;
 }
 
 .kupong-title {
@@ -283,7 +291,6 @@ main {
   display: grid;
   grid-template-rows: 1fr 1fr;
   gap: 20px;
-  max-width: 500px;
   flex-basis: 0;
 }
 
@@ -335,12 +342,104 @@ li {
   .kupong-container {
     flex-basis: auto;
     max-width: none;
+    border: 5px solid red;
+  }
+  #boxT img,
+  #boxB img {
+    margin-top: 10px;
   }
 }
 
-.Fbox {
-  background-color: #b91010;
-  padding: 10px;
+.taktiktavla {
+  display: flex;
+  flex-direction: column;
   border: 2px solid black;
   border-radius: 8px;
+  justify-content: space-between;
+}
+
+.tavla {
+  display: flex;
+  flex-basis: 300px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  justify-content: center;
+  align-items: center;
+}
+
+.tavla img {
+  width: 500px;
+  flex-grow: 1;
+  flex-shrink: 1;
+}
+.Fbox {
+  display: flex;
+  flex-basis: 100px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  background-color: red;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+}
+
+#loginDiv,
+#registerDiv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  flex: 1 1 500px;
+  font-family: "Montserrat", sans-serif;
+  margin: 0 40px 0 40px;
+  border-radius: 8px;
+
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+    rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+    rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 300px;
+  height: 100%;
+  background-color: whitesmoke;
+}
+
+.register {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-grow: 1;
+  flex-shrink: 1;
+  flex-basis: 300px;
+  height: 100%;
+  background-color: rgb(255, 65, 65);
+  border-radius: 8px;
+}
+
+.btn {
+  padding: 10px;
+  height: 10%;
+  width: 40%;
+  border-radius: 8px;
+  box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+    rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+    rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+}
+
+#btnR {
+  background-color: white;
+}
+#btnL {
+  background-color: red;
 }
