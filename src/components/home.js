@@ -5,15 +5,14 @@ export default class Homescreen extends HTMLElement {
         <img
           src="./static/logo/tipsvänner.png"
           alt="Tipsvänner Logo"
-          height="200px"
-          width="500px
+          height="100px"
+          width="300px
           "
         />
       </div>
       <div class="links">
         <a class="aLink" href="">Hem</a>
         <a class="aLink" href="#team">Mitt Lag</a>
-        <a class="aLink">Placeholder</a>
       </div>
     </div>
     <main>

@@ -1,7 +1,13 @@
-export default class Team extends HTMLElement {
-  connectedCallback() {
-    this.innerHTML = `
-
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <script type="module" src="/src/main.js"></script>
     <div class="nav">
       <div class="logo">
         <img
@@ -15,6 +21,7 @@ export default class Team extends HTMLElement {
       <div class="links">
         <a class="aLink" href="">Hem</a>
         <a class="aLink" href="#team">Mitt Lag</a>
+        <a class="aLink">Placeholder</a>
       </div>
     </div>
     <h1>Mitt Lag</h1>
@@ -36,9 +43,5 @@ export default class Team extends HTMLElement {
         </div>
       </div>
     </main>
-    `;
-  }
-}
-{
-  /* <my-kupong></my-kupong> */
-}
+  </body>
+</html>
