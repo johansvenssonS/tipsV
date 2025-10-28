@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import getKupong from "./puppeteer.js";
 import { saveKupongToDb, loadKupongFromDb, getLastEntry } from "./kupong-db.js";
+import { createUser, findUserByCode, generateUserCode } from "./auth-db.js";
 
 const app = express();
 const allowedOrigins = [
@@ -10,6 +11,7 @@ const allowedOrigins = [
   "http://127.0.0.1:3000",
 ];
 app.use(cors({ origin: allowedOrigins }));
+app.use(express.json()); // Add JSON parsing middleware
 
 // Helper function to get ISO week number
 function getWeekNumber(date) {
@@ -21,6 +23,53 @@ function getWeekNumber(date) {
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
+
+// Auth endpoints
+app.post("/backend/login", async (req, res) => {
+  try {
+    const { code } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: "Code is required" });
+    }
+
+    const user = await findUserByCode(code);
+
+    if (!user) {
+      return res.status(401).json({ error: "Invalid code - team not found" });
+    }
+
+    res.json({
+      name: user.name,
+      code: user.code,
+      kupong_data: user.kupong_data,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+app.post("/backend/register", async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Team name is required" });
+    }
+
+    const code = generateUserCode();
+    const user = await createUser(name.trim(), code);
+
+    res.json({
+      name: user.name,
+      code: user.code,
+    });
+  } catch (error) {
+    console.error("Registration error:", error);
+    res.status(500).json({ error: "Registration failed" });
+  }
+});
 
 // /kupong endpoint
 app.get("/kupong", async (req, res) => {
@@ -71,6 +120,33 @@ app.get("/kupong", async (req, res) => {
 });
 app.get("/", (req, res) => {
   res.send("StrykVänner backend server är igång!");
+});
+
+// Temporary migration endpoint - REMOVE after running once!
+app.get("/create-users-table", async (req, res) => {
+  try {
+    const { Pool } = await import("pg");
+    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        code VARCHAR(20) UNIQUE NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        kupong_data JSONB DEFAULT NULL
+      );
+    `);
+    
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS idx_users_code ON users(code);
+    `);
+    
+    res.json({ message: "Users table created successfully!" });
+  } catch (error) {
+    console.error("Migration error:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Use the Render-provided port or 3000 if running locally

@@ -1,3 +1,4 @@
+// Remove pg import - use backend API instead
 const auth = {
   isLoggedIn: false,
   currentUser: null,
@@ -14,21 +15,72 @@ const auth = {
     }
   },
 
-  login: function (username, userCode) {
-    this.isLoggedIn = true;
-    this.currentUser = username;
-    this.userCode = userCode;
+  async login(userCode) {
+    try {
+      // Make API call to backend
+      const response = await fetch("https://tipsv.onrender.com/backend/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code: userCode }),
+      });
 
-    // Spara i session
-    localStorage.setItem("currentUser", username);
-    localStorage.setItem("userCode", userCode);
+      if (!response.ok) {
+        throw new Error("Invalid code - team not found");
+      }
 
-    // Dispatch event to notify other components
-    window.dispatchEvent(
-      new CustomEvent("auth-changed", {
-        detail: { isLoggedIn: true, username },
-      })
-    );
+      const user = await response.json();
+
+      // Set login state
+      this.isLoggedIn = true;
+      this.currentUser = user.name;
+      this.userCode = user.code;
+
+      // Save to localStorage
+      localStorage.setItem("currentUser", user.name);
+      localStorage.setItem("userCode", user.code);
+
+      // Dispatch event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("auth-changed", {
+          detail: { isLoggedIn: true, username: user.name },
+        })
+      );
+
+      return user;
+    } catch (error) {
+      console.error("Login failed:", error);
+      throw error;
+    }
+  },
+  async register(username) {
+    try {
+      // Make API call to backend
+      const response = await fetch(
+        "https://tipsv.onrender.com/backend/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ name: username }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Registration failed");
+      }
+
+      const data = await response.json();
+
+      localStorage.setItem("currentUser", username);
+      localStorage.setItem("userCode", data.code);
+      return data.code;
+    } catch (error) {
+      console.error("Registration failed:", error);
+      throw new Error("Registration failed");
+    }
   },
   //ta bort i session
   logout: function () {
