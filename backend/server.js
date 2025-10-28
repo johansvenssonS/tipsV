@@ -80,18 +80,14 @@ app.get("/kupong", async (req, res) => {
   const hours = today.getHours();
 
   try {
-    // First, check if current week's kupong exists
     let kupong = await loadKupongFromDb(week, year);
 
     if (kupong) {
-      // Current week found, return it
       res.json({ kupong });
       return;
     }
 
-    // No current week - decide whether to scrape or show last entry
     if (day >= 4 && hours >= 12) {
-      // After Thursday 12:00 - try scraping new kupong
       kupong = await getKupong();
       if (kupong && kupong.length > 0) {
         await saveKupongToDb(kupong, week, year);
@@ -100,8 +96,7 @@ app.get("/kupong", async (req, res) => {
       }
     }
 
-    // Before Thursday 12:00 OR scraping failed - get last entry
-    const lastKupong = await getLastEntry(); // New function
+    const lastKupong = await getLastEntry();
     if (lastKupong) {
       res.json({
         kupong: lastKupong.data,
@@ -120,33 +115,6 @@ app.get("/kupong", async (req, res) => {
 });
 app.get("/", (req, res) => {
   res.send("StrykVänner backend server är igång!");
-});
-
-// Temporary migration endpoint - REMOVE after running once!
-app.get("/create-users-table", async (req, res) => {
-  try {
-    const { Pool } = await import("pg");
-    const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-    
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL,
-        code VARCHAR(20) UNIQUE NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW(),
-        kupong_data JSONB DEFAULT NULL
-      );
-    `);
-    
-    await pool.query(`
-      CREATE INDEX IF NOT EXISTS idx_users_code ON users(code);
-    `);
-    
-    res.json({ message: "Users table created successfully!" });
-  } catch (error) {
-    console.error("Migration error:", error);
-    res.status(500).json({ error: error.message });
-  }
 });
 
 // Use the Render-provided port or 3000 if running locally

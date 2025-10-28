@@ -334,7 +334,7 @@ li {
 
 @media (max-width: 1200px) {
   main {
-    flex-direction: column; /* Stack vertically on smaller screens */
+    flex-direction: column;
     gap: 30px;
   }
 
@@ -353,8 +353,6 @@ li {
 
 .taktiktavla {
   display: flex;
-  flex-direction: column;
-  border: 2px solid black;
   border-radius: 8px;
   justify-content: space-between;
 }
@@ -366,6 +364,7 @@ li {
   flex-shrink: 1;
   justify-content: center;
   align-items: center;
+  background-color: #bdbdbd;
 }
 
 .tavla img {
@@ -378,13 +377,98 @@ li {
   flex-basis: 100px;
   flex-grow: 1;
   flex-shrink: 1;
-  background-color: red;
-  justify-content: center;
-  align-items: center;
+  background-color: #f5f5f5;
+  padding: 20px;
   border-radius: 8px;
+  flex-direction: column;
+}
+
+/* Player Management Styles */
+.player-management {
+  width: 100%;
+}
+
+.player-management label {
+  font-weight: bold;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.player-management #noPlayers {
+  width: 60px;
+  padding: 5px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+}
+
+.add-player-section {
+  margin-bottom: 20px;
+}
+
+.add-player-btn {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.add-player-btn:hover {
+  background-color: #45a049;
+}
+
+.player-inputs-container {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.player-input {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  gap: 10px;
+}
+
+.player-name-input {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.player-name-input:focus {
+  outline: none;
+  border-color: #4caf50;
+  box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
+}
+
+.remove-player-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-player-btn:hover {
+  background-color: #da190b;
 }
 router-outlet,
-login-view {
+login-view,
+team-view,
+register-view {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -464,4 +548,32 @@ login-view {
 #btnL {
   background-color: red;
   color: white;
+}
+
+.trupp {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, #e6e1e1 0%, #ebb1b1 100%);
+  border-radius: 8px;
+  padding: 10px;
+  border-bottom: 3px solid black;
+}
+
+.mainT {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 40px 0 40px;
+  justify-content: space-around;
+}
+
+.submitTeam {
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  width: 100%;
 }
