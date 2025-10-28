@@ -12,47 +12,37 @@ export default class Login extends HTMLElement {
   }
 
   setupEventListeners() {
-    const loginForm = this.querySelector("#loginForm");
-    const registerForm = this.querySelector("#registerForm");
+    const loginBtn = this.querySelector("#btnL");
+    const registerBtn = this.querySelector("#btnR");
 
-    if (loginForm) {
-      loginForm.addEventListener("submit", this.handleLogin);
+    if (loginBtn) {
+      loginBtn.addEventListener("click", this.handleLogin);
     }
 
-    if (registerForm) {
-      registerForm.addEventListener("submit", this.handleRegister);
-    }
-
-    // Toggle between login and register
-    const toggleBtns = this.querySelectorAll("[data-toggle]");
-    toggleBtns.forEach((btn) => {
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        this.toggleView();
+    if (registerBtn) {
+      registerBtn.addEventListener("click", () => {
+        location.hash = "register";
       });
-    });
+    }
   }
 
-  async handleLogin(e) {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const username = formData.get("username");
-    const userCode = formData.get("userCode");
+  handleLogin() {
+    const lagKodInput = this.querySelector("#LagKod");
+    const lagKod = lagKodInput.value.trim();
 
-    if (!username || !userCode) {
-      this.showError("Please fill in all fields");
+    if (!lagKod) {
+      alert("Please enter your team code");
       return;
     }
 
     try {
-      // Here you could validate with your backend
-      // For now, just accept any non-empty values
-      auth.login(username, userCode);
+      // Pass to auth
+      auth.login("Team", lagKod);
 
-      // Redirect to team page after successful login
+      // Redirect to team page
       location.hash = "team";
     } catch (error) {
-      this.showError("Invalid login credentials");
+      alert("Invalid team code");
     }
   }
 
@@ -103,6 +93,39 @@ export default class Login extends HTMLElement {
 
   render() {
     this.innerHTML = `
-      <div>hejhej</div>`;
+      <div class="nav">
+      <div class="logo">
+        <img
+          src="./static/logo/tipsvänner.png"
+          alt="Tipsvänner Logo"
+          height="100px"
+          width="300px
+          "
+        />
+      </div>
+      <div class="links">
+        <a class="aLink" href="">Hem</a>
+        <a class="aLink" href="#team">Mitt Lag</a>
+      </div>
+    </div>
+
+    <div id="loginDiv">
+      <div class="login">
+        <h1>Logga in</h1>
+        <input id="LagKod" type="text" placeholder="Din lagkod...." required />
+        <button  type="submit"class="btn" id="btnL">Logga in</button>
+        <button type="submit" class="btn" id="btnR">Registrera</button>
+      </div>
+      <div class="register">
+        <h1>Välkommen Lagkapten!</h1>
+        <p>
+          För att komma in i omklädningsrummet behöver du antingen registrera
+          ett nytt lag, eller logga in med den koden du fick vid skapandet av
+          laget!
+        </p>
+        
+      </div>
+    </div>
+`;
   }
 }
