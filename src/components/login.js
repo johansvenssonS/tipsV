@@ -29,6 +29,7 @@ export default class Login extends HTMLElement {
   handleLogin() {
     const lagKodInput = this.querySelector("#LagKod");
     const lagKod = lagKodInput.value.trim();
+    console.log(lagKod);
 
     if (!lagKod) {
       alert("Please enter your team code");
@@ -71,24 +72,6 @@ export default class Login extends HTMLElement {
     } catch (error) {
       this.showError("Registration failed");
     }
-  }
-
-  toggleView() {
-    const loginDiv = this.querySelector("#loginDiv");
-    const registerDiv = this.querySelector("#registerDiv");
-
-    loginDiv.classList.toggle("hidden");
-    registerDiv.classList.toggle("hidden");
-  }
-
-  showError(message) {
-    const errorDiv = this.querySelector("#errorMessage");
-    errorDiv.textContent = message;
-    errorDiv.classList.remove("hidden");
-
-    setTimeout(() => {
-      errorDiv.classList.add("hidden");
-    }, 5000);
   }
 
   render() {
