@@ -15,10 +15,14 @@ export default class Router extends HTMLElement {
         view: "<login-view></login-view",
         subject: "user-Login",
       },
+      register: {
+        view: "<register-view></register-view",
+        subject: "user-register",
+      },
       team: {
         view: "<team-view></team-view>",
         name: "team-screen",
-        requiresAuth: true, // Mark protected routes
+        requiresAuth: true,
       },
     };
   }
@@ -44,7 +48,7 @@ export default class Router extends HTMLElement {
 
     // Kolla om routen behöver loggas in (user-specific)
     const route = this.routes[this.currentRoute];
-    if (route && route.requiresAuth && auth.checkExistingLogin) {
+    if (route && route.requiresAuth && !auth.isLoggedIn) {
       location.hash = "login";
       return;
     }

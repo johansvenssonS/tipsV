@@ -74,8 +74,21 @@ const auth = {
 
       const data = await response.json();
 
-      localStorage.setItem("currentUser", username);
+      // Auto-login after successful registration
+      this.isLoggedIn = true;
+      this.currentUser = data.name;
+      this.userCode = data.code;
+
+      localStorage.setItem("currentUser", data.name);
       localStorage.setItem("userCode", data.code);
+
+      // Dispatch event to notify other components
+      window.dispatchEvent(
+        new CustomEvent("auth-changed", {
+          detail: { isLoggedIn: true, username: data.name },
+        })
+      );
+
       return data.code;
     } catch (error) {
       console.error("Registration failed:", error);

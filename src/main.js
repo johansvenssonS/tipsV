@@ -14,6 +14,9 @@ customElements.define("team-view", Team);
 import Login from "./components/login.js";
 customElements.define("login-view", Login);
 
+import Register from "./components/register.js";
+customElements.define("register-view", Register);
+
 //ROUTER LOGIC
 
 import Router from "./router.js";
