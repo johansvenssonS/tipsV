@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <script type="module" src="/src/main.js"></script>
+    <div class="nav">
+      <div class="logo">
+        <img
+          src="./static/logo/tipsvänner.png"
+          alt="Tipsvänner Logo"
+          height="100px"
+          width="300px"
+        />
+      </div>
+      <div class="links">
+        <a class="aLink" href="">Hem</a>
+        <a class="aLink" href="#team">Mitt Lag</a>
+        <a href="#play">DevPlay</a>
+      </div>
+    </div>
+    <div class="mainT">
+      <div class="trupp">
+        <h1>Här lägger ni eran kupong</h1>
+        <p>Lycka till: ${this.teamName}!</p>
+      </div>
+      <div class="game-content">
+        <div class="player-table"></div>
+        <my-kupong></my-kupong>
+        
+      </div class="game-content">
+    </div>
+  </body>
+</html>

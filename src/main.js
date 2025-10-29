@@ -10,6 +10,11 @@ customElements.define("landing-view", Homescreen);
 import Team from "./components/team.js";
 customElements.define("team-view", Team);
 
+//game view
+
+import Game from "./components/play.js";
+customElements.define("play-view", Game);
+
 ///LOGIN VIEW
 import Login from "./components/login.js";
 customElements.define("login-view", Login);
