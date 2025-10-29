@@ -3,7 +3,12 @@ import express from "express";
 import cors from "cors";
 import getKupong from "./puppeteer.js";
 import { saveKupongToDb, loadKupongFromDb, getLastEntry } from "./kupong-db.js";
-import { createUser, findUserByCode, generateUserCode } from "./auth-db.js";
+import {
+  createUser,
+  findUserByCode,
+  generateUserCode,
+  updateTeamPlayers,
+} from "./auth-db.js";
 
 const app = express();
 const allowedOrigins = [
@@ -68,6 +73,39 @@ app.post("/backend/register", async (req, res) => {
   } catch (error) {
     console.error("Registration error:", error);
     res.status(500).json({ error: "Registration failed" });
+  }
+});
+app.post("/backend/update-team", async (req, res) => {
+  try {
+    const { code, teamData } = req.body;
+
+    if (!code) {
+      return res.status(400).json({ error: "Team code is required" });
+    }
+
+    if (!teamData || !teamData.players || teamData.players.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Team data with players is required" });
+    }
+
+    // Verify the team exists
+    const user = await findUserByCode(code);
+    if (!user) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    // Update the team data
+    await updateTeamPlayers(code, teamData);
+
+    res.json({
+      message: "Team updated successfully",
+      teamName: user.name,
+      playerCount: teamData.players.length,
+    });
+  } catch (error) {
+    console.error("Team update error:", error);
+    res.status(500).json({ error: "Failed to update team" });
   }
 });
 
