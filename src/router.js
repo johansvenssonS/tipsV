@@ -24,6 +24,11 @@ export default class Router extends HTMLElement {
         name: "team-screen",
         requiresAuth: true,
       },
+      play: {
+        view: "<play-view></play-view",
+        subject: "game-view",
+        requiresAuth: true,
+      },
     };
   }
 

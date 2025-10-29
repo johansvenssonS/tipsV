@@ -28,14 +28,12 @@ export default class Register extends HTMLElement {
     }
 
     try {
-      // Call auth.register to create the team and get the code
       const userCode = await auth.register(lagName);
 
       alert(
         `Din lagkod är: ${userCode}\nSpara den! du behöver den för att logga in!`
       );
 
-      // Auto-login after registration (auth.register already handles this)
       location.hash = "team";
     } catch (error) {
       alert("Registration failed: " + error.message);
