@@ -80,7 +80,7 @@ export default class Team extends HTMLElement {
     }
   }
 
-  submitTeam() {
+  async submitTeam() {
     // Get all player name inputs
     const playerInputs = this.querySelectorAll(".player-name-input");
     const players = [];
@@ -99,15 +99,44 @@ export default class Team extends HTMLElement {
     console.log("Team submitted with players:", players);
     console.log("Total players:", players.length);
 
-    // You can now send this data to your backend or save it
-    // For example: await this.saveTeamToBackend(players);
-
     if (players.length === 0) {
       alert("Lägg till minst en spelare innan du lämnar in laget!");
       return;
     }
 
-    alert(`Laguppställning inlämnad med ${players.length} spelare!`);
+    // Prepare data for backend
+    const teamData = {
+      players: players,
+      playerCount: players.length,
+      submittedAt: new Date().toISOString()
+    };
+
+    try {
+      // Send to backend
+      const response = await fetch("https://tipsv.onrender.com/backend/update-team", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: this.savedCode,
+          teamData: teamData
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save team");
+      }
+
+      const result = await response.json();
+      
+      alert(`Laguppställning sparad! ${result.playerCount} spelare registrerade.`);
+      console.log("Team saved successfully:", result);
+      
+    } catch (error) {
+      console.error("Error saving team:", error);
+      alert("Kunde inte spara laguppställning. Försök igen.");
+    }
   }
 
   render() {

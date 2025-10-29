@@ -40,6 +40,19 @@ export async function updateUserKupong(code, kupongData) {
   }
 }
 
+export async function updateTeamPlayers(code, teamData) {
+  try {
+    await pool.query(`UPDATE users SET kupong_data = $1 WHERE code = $2`, [
+      JSON.stringify(teamData),
+      code,
+    ]);
+    return true;
+  } catch (error) {
+    console.error("Error updating team players:", error);
+    throw error;
+  }
+}
+
 // Generate unique user code
 export function generateUserCode() {
   return Math.random().toString(36).substr(2, 8).toUpperCase();
