@@ -9,6 +9,13 @@ import {
   generateUserCode,
   updateTeamPlayers,
 } from "./auth-db.js";
+import {
+  upsertEntry,
+  lockEntry,
+  getLatestEntry,
+  getEntry,
+  listEntries,
+} from "./entries-db.js";
 
 const app = express();
 const allowedOrigins = [
@@ -106,6 +113,79 @@ app.post("/backend/update-team", async (req, res) => {
   } catch (error) {
     console.error("Team update error:", error);
     res.status(500).json({ error: "Failed to update team" });
+  }
+});
+
+// Entries (team picks by week)
+app.get("/backend/entries/latest", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.status(400).json({ error: "code is required" });
+    const entry = await getLatestEntry(code);
+    res.json({ entry });
+  } catch (e) {
+    console.error("entries latest error:", e);
+    res.status(500).json({ error: "Failed to load latest entry" });
+  }
+});
+
+app.get("/backend/entries/list", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.status(400).json({ error: "code is required" });
+    const items = await listEntries(code);
+    res.json({ items });
+  } catch (e) {
+    console.error("entries list error:", e);
+    res.status(500).json({ error: "Failed to list entries" });
+  }
+});
+
+app.get("/backend/entries/get", async (req, res) => {
+  try {
+    const { code, week, year } = req.query;
+    if (!code || !week || !year)
+      return res.status(400).json({ error: "code, week, year required" });
+    const entry = await getEntry(code, Number(week), Number(year));
+    res.json({ entry });
+  } catch (e) {
+    console.error("entries get error:", e);
+    res.status(500).json({ error: "Failed to load entry" });
+  }
+});
+
+app.post("/backend/entries/save", async (req, res) => {
+  try {
+    const { code, team, week, year, data } = req.body || {};
+    if (!code || !team || !week || !year || !data)
+      return res
+        .status(400)
+        .json({ error: "code, team, week, year, data required" });
+    try {
+      await upsertEntry({ code, team, week, year, data });
+    } catch (err) {
+      if (err.code === "ENTRY_LOCKED") {
+        return res.status(423).json({ error: "Entry is locked" });
+      }
+      throw err;
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("entries save error:", e);
+    res.status(500).json({ error: "Failed to save entry" });
+  }
+});
+
+app.post("/backend/entries/lock", async (req, res) => {
+  try {
+    const { code, week, year } = req.body || {};
+    if (!code || !week || !year)
+      return res.status(400).json({ error: "code, week, year required" });
+    await lockEntry({ code, week, year });
+    res.json({ ok: true });
+  } catch (e) {
+    console.error("entries lock error:", e);
+    res.status(500).json({ error: "Failed to lock entry" });
   }
 });
 
