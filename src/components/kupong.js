@@ -2,6 +2,7 @@ export default class Kupong extends HTMLElement {
   constructor() {
     super();
     this.kupong = [];
+    this.readonly = false;
   }
 
   async connectedCallback() {
@@ -61,7 +62,10 @@ export default class Kupong extends HTMLElement {
             </tbody>
           </table>
           
-          <div class="submit-section">
+          <div class="submit-section" style="display:flex; align-items:center; gap:12px; justify-content:flex-end;">
+            <div class="kupong-cost" aria-live="polite" style="font-weight:600;">
+              Kupongkostnad: <span class="kupong-cost-value">1</span> kr
+            </div>
             <button class="submit-button">Lämna in kupong</button>
           </div>
         </div>
@@ -70,7 +74,8 @@ export default class Kupong extends HTMLElement {
 
     // Klicka i i kupong
     this.querySelectorAll(".bet-button").forEach((btn) => {
-      btn.addEventListener("click", function () {
+      btn.addEventListener("click", () => {
+        if (this.readonly) return;
         if (btn.classList.contains("checked")) {
           btn.classList.remove("checked");
           btn.innerHTML = "";
@@ -79,8 +84,12 @@ export default class Kupong extends HTMLElement {
           btn.innerHTML =
             '<svg class="checkmark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
         }
+        this.updateCost();
+        this.dispatchEvent(new CustomEvent("kupong-change", { bubbles: true }));
       });
     });
+
+    this.updateCost();
 
     return this;
   }
@@ -89,5 +98,55 @@ export default class Kupong extends HTMLElement {
     const str = String(kupong).replace(/^\d+\s*/, "");
     const teamNames = str.split("1X2")[0].trim();
     return teamNames;
+  }
+
+  updateCost() {
+    const rows = this.querySelectorAll(".match-row");
+    let product = 1;
+    rows.forEach((row) => {
+      const picks = row.querySelectorAll(".bet-button.checked").length;
+      // Cost per match: 0→1, 1→1, 2→2, 3→4 (halv = x2, hel = x4)
+      const factor = picks === 0 ? 1 : 2 ** (picks - 1);
+      product *= factor;
+    });
+    const el = this.querySelector(".kupong-cost-value");
+    if (el) el.textContent = String(product);
+  }
+
+  clearSelections() {
+    this.querySelectorAll(".bet-button.checked").forEach((b) => {
+      b.classList.remove("checked");
+      b.innerHTML = "";
+    });
+    this.updateCost();
+  }
+
+  applySelections(kupongData) {
+    // kupongData: [{ index: 1.., picks: [{col: '1'|'X'|'2'}] }]
+    if (!Array.isArray(kupongData)) return;
+    this.clearSelections();
+    const rows = this.querySelectorAll(".match-row");
+    kupongData.forEach((rowData) => {
+      const rowIdx = (rowData.index || 1) - 1;
+      const row = rows[rowIdx];
+      if (!row) return;
+      (rowData.picks || []).forEach((p) => {
+        const btn = row.querySelector(`.bet-button[data-col="${p.col}"]`);
+        if (btn && !btn.classList.contains("checked")) {
+          btn.classList.add("checked");
+          btn.innerHTML =
+            '<svg class="checkmark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>';
+        }
+      });
+    });
+    this.updateCost();
+  }
+
+  setInteractive(enabled) {
+    this.readonly = !enabled;
+    const container = this.querySelector(".table-wrapper");
+    if (container) container.style.pointerEvents = enabled ? "auto" : "none";
+    const submitBtn = this.querySelector(".submit-button");
+    if (submitBtn) submitBtn.toggleAttribute("disabled", !enabled);
   }
 }

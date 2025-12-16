@@ -34,7 +34,9 @@ export default class Game extends HTMLElement {
 
   async connectedCallback() {
     this.render();
+    this.bindKupongSubmit();
     await this.loadPlayersAndGames();
+    await this.initEntriesUI();
   }
 
   async getUser() {
@@ -77,6 +79,275 @@ export default class Game extends HTMLElement {
     }
   }
 
+  async initEntriesUI() {
+    const code = localStorage.getItem("userCode");
+    if (!code) return;
+    try {
+      const listResp = await this.fetchJson(
+        `https://tipsv.onrender.com/backend/entries/list?code=${encodeURIComponent(
+          code
+        )}`
+      );
+      const items = listResp?.data?.items || [];
+      this.populateEntryDropdown(items);
+
+      const latestResp = await this.fetchJson(
+        `https://tipsv.onrender.com/backend/entries/latest?code=${encodeURIComponent(
+          code
+        )}`
+      );
+      const entry = latestResp?.data?.entry;
+      if (entry) {
+        this.applyEntry(entry);
+        this.setEntryStatus(entry);
+        const canEdit =
+          !entry.locked && this.isCurrentWeek(entry.week, entry.year);
+        this.setEditButtonAvailability(canEdit);
+        this.setEditable(canEdit);
+        const select = this.querySelector("#entry-select");
+        if (select) select.value = `${entry.year}-${entry.week}`;
+      } else {
+        this.setEditButtonAvailability(true);
+        this.setEditable(true);
+      }
+    } catch (e) {
+      console.error("entries init error", e);
+      this.populateEntryDropdown([]);
+      this.setEditButtonAvailability(true);
+      this.setEditable(true);
+    }
+
+    // Bind dropdown and edit button
+    const select = this.querySelector("#entry-select");
+    const editBtn = this.querySelector("#edit-entry");
+    select?.addEventListener("change", async () => {
+      const val = select.value; // e.g., 2025-46
+      const [y, w] = val.split("-").map((x) => Number(x));
+      await this.loadAndApplyEntry(w, y);
+    });
+    editBtn?.addEventListener("click", () => {
+      this.setEditable(true);
+      this.showToast("Redigering aktiverad", "info");
+    });
+  }
+
+  isCurrentWeek(week, year) {
+    const now = new Date();
+    const cur = this.getWeekInfo(now);
+    return cur.week === Number(week) && cur.year === Number(year);
+  }
+
+  getWeekInfo(date) {
+    const d = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+    );
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    return { week, year: d.getUTCFullYear() };
+  }
+
+  populateEntryDropdown(items) {
+    const select = this.querySelector("#entry-select");
+    if (!select) return;
+    select.innerHTML = items
+      .map((i) => {
+        return `<option value="${i.year}-${i.week}">v${i.week} ${i.year}${
+          i.locked ? " (låst)" : ""
+        }</option>`;
+      })
+      .join("");
+  }
+
+  async loadAndApplyEntry(week, year) {
+    const code = localStorage.getItem("userCode");
+    const resp = await this.fetchJson(
+      `https://tipsv.onrender.com/backend/entries/get?code=${encodeURIComponent(
+        code
+      )}&week=${week}&year=${year}`
+    );
+    const entry = resp?.data?.entry;
+    if (entry) {
+      this.applyEntry(entry);
+      this.setEntryStatus(entry);
+      const editable = !entry.locked && this.isCurrentWeek(week, year);
+      this.setEditButtonAvailability(editable);
+      this.setEditable(editable);
+    }
+  }
+
+  applyEntry(entry) {
+    const kupongEl = this.querySelector("my-kupong");
+    kupongEl?.applySelections(entry?.data?.kupong || []);
+  }
+
+  setEntryStatus(entry) {
+    const status = this.querySelector("#entry-status");
+    if (!status) return;
+    status.textContent = entry.locked
+      ? `v${entry.week} ${entry.year} – Låst`
+      : `v${entry.week} ${entry.year}`;
+  }
+
+  setEditable(enabled) {
+    const kupongEl = this.querySelector("my-kupong");
+    kupongEl?.setInteractive(enabled);
+    const submitBtn = this.querySelector("my-kupong .submit-button");
+    if (submitBtn) submitBtn.toggleAttribute("disabled", !enabled);
+    const editBtn = this.querySelector("#edit-entry");
+    if (editBtn) editBtn.toggleAttribute("disabled", enabled);
+  }
+
+  setEditButtonAvailability(canEdit) {
+    const editBtn = this.querySelector("#edit-entry");
+    if (editBtn) editBtn.disabled = !canEdit;
+  }
+
+  bindKupongSubmit() {
+    const tryBind = () => {
+      const kupongEl = this.querySelector("my-kupong");
+      const btn = kupongEl?.querySelector(".submit-button");
+      if (btn && !btn.__boundToPlay) {
+        btn.addEventListener("click", (e) => this.handleSubmit(e));
+        btn.__boundToPlay = true;
+        return true;
+      }
+      return false;
+    };
+
+    if (!tryBind()) {
+      const observer = new MutationObserver(() => {
+        if (tryBind()) observer.disconnect();
+      });
+      observer.observe(this, { childList: true, subtree: true });
+    }
+  }
+
+  collectKupongData() {
+    const rows = this.querySelectorAll(".match-row");
+    const kupong = Array.from(rows).map((row, idx) => {
+      const match = row.querySelector(".team-names")?.textContent.trim() || "";
+      const selected = row.querySelectorAll(".bet-cell .bet-button.checked");
+
+      const picks = Array.from(selected).map((btn) => {
+        const col = btn.getAttribute("data-col");
+        const label = col ?? btn.textContent.trim();
+        return { col, label };
+      });
+
+      return {
+        index: idx + 1,
+        match,
+        picks,
+      };
+    });
+
+    const players = (this.userData?.players ?? []).map((p) => {
+      const indices = new Set(p.assignedGames.map((g) => g.index));
+      const myPicks = kupong.filter((k) => indices.has(k.index));
+      return {
+        name: p.name,
+        color: p.color,
+        assignedGames: p.assignedGames,
+        picks: myPicks,
+      };
+    });
+
+    const teamPayload = {
+      team: this.teamName,
+      submittedAt: new Date().toISOString(),
+      kupong,
+    };
+
+    return { teamPayload, players };
+  }
+
+  async handleSubmit(e) {
+    e?.preventDefault?.();
+
+    const submitBtn = this.querySelector("my-kupong .submit-button");
+    submitBtn?.setAttribute("disabled", "true");
+
+    try {
+      // Validate: every match has at least one pick
+      const rows = this.querySelectorAll(".match-row");
+      const missing = [];
+      rows.forEach((row, i) => {
+        const hasPick = row.querySelector(".bet-button.checked");
+        row.classList.toggle("missing-pick", !hasPick);
+        if (!hasPick) missing.push(i + 1);
+      });
+      if (missing.length) {
+        this.showToast(
+          `Du måste välja för alla matcher (${missing.length} saknas)`,
+          "error"
+        );
+        return;
+      }
+
+      const { teamPayload, players } = this.collectKupongData();
+      console.log("Submitting:", { teamPayload, players });
+
+      const code = localStorage.getItem("userCode");
+      if (!code) throw new Error("No team code found in localStorage");
+
+      const teamData = {
+        team: teamPayload.team,
+        submittedAt: teamPayload.submittedAt,
+        kupong: teamPayload.kupong,
+        players,
+      };
+
+      const nowInfo = this.getWeekInfo(new Date());
+      const payload = {
+        code,
+        team: teamData.team,
+        week: nowInfo.week,
+        year: nowInfo.year,
+        data: teamData,
+      };
+
+      const res = await fetch(
+        "https://tipsv.onrender.com/backend/entries/save",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Submit failed (${res.status}): ${text}`);
+      }
+      console.log("Submit OK");
+      this.showToast("Kupongen är inlämnad!", "success");
+      // refresh dropdown list and status
+      await this.initEntriesUI();
+    } catch (err) {
+      console.error("Submit error:", err);
+      this.showToast(`Inlämning misslyckades: ${err.message}`, "error");
+    } finally {
+      submitBtn?.removeAttribute("disabled");
+    }
+  }
+
+  async tableEvent() {
+    let tableRows = this.getElementsByClassName("match-row");
+    for (let i = 0; i < tableRows.length; i++) {
+      const teamNames = tableRows[i].querySelector(".team-names");
+      console.log(teamNames); ///teamnames element
+
+      const button = tableRows[i].querySelectorAll(".bet-cell");
+      console.log(`i är nu ${i}`);
+      console.log(button);
+    }
+    // console.log(tableRows);
+
+    // console.log(childs);
+  }
+
   async waitForKupongData() {
     // Wait a bit for kupong component to load
     return new Promise((resolve) => {
@@ -104,17 +375,14 @@ export default class Game extends HTMLElement {
   }
 
   assignGamesToPlayers() {
-    const totalMatches = this.games.length; // Should be 13
+    const totalMatches = this.games.length;
     const totalPlayers = this.userData.players.length;
 
-    // Distribute matches as evenly as possible
     const matchesPerPlayer = Math.floor(totalMatches / totalPlayers);
     const extraMatches = totalMatches % totalPlayers;
 
-    // Create array of all match indices
     const allMatchIndices = Array.from({ length: totalMatches }, (_, i) => i);
 
-    // Shuffle the match indices for random distribution
     for (let i = allMatchIndices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allMatchIndices[i], allMatchIndices[j]] = [
@@ -127,7 +395,6 @@ export default class Game extends HTMLElement {
 
     const playersWithGames = this.userData.players.map(
       (player, playerIndex) => {
-        // Assign color
         const color = this.playerColors[playerIndex % this.playerColors.length];
 
         // Calculate how many matches this player gets
@@ -160,6 +427,7 @@ export default class Game extends HTMLElement {
   }
 
   renderPlayerTable() {
+    this.tableEvent();
     const playerTable = this.querySelector(".player-table");
     if (!playerTable || !this.userData.players) return;
 
@@ -222,11 +490,75 @@ export default class Game extends HTMLElement {
       </div>
       <div class="game-content">
         <div class="player-table"></div>
-        <my-kupong></my-kupong>
-        
+
+        <aside class="right-column">
+          <div class="entry-controls">
+            <span id="entry-status" class="entry-status"></span>
+            <label for="entry-select" class="entry-label">Tidigare kuponger:</label>
+            <select id="entry-select" class="entry-select"></select>
+            <button id="edit-entry" type="button" class="entry-edit">Redigera</button>
+          </div>
+
+          <div id="kupong-form">
+            <my-kupong></my-kupong>
+          </div>
+        </aside>
+
       </div class="game-content">
     </div>
       
 `;
+    this.ensureToastHost();
+  }
+
+  async fetchJson(url, options) {
+    const res = await fetch(url, options);
+    const ct = res.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      return { ok: false, data: null, status: res.status };
+    }
+    try {
+      const data = await res.json();
+      return { ok: res.ok, data, status: res.status };
+    } catch (e) {
+      return { ok: false, data: null, status: res.status };
+    }
+  }
+
+  ensureToastHost() {
+    if (this.querySelector(".toast-host")) return;
+    const host = document.createElement("div");
+    host.className = "toast-host";
+    host.style.position = "fixed";
+    host.style.right = "16px";
+    host.style.bottom = "16px";
+    host.style.display = "flex";
+    host.style.flexDirection = "column";
+    host.style.gap = "8px";
+    host.style.zIndex = "9999";
+    this.appendChild(host);
+  }
+
+  showToast(message, type = "info") {
+    this.ensureToastHost();
+    const host = this.querySelector(".toast-host");
+    const t = document.createElement("div");
+    t.textContent = message;
+    t.style.color = "#0b0d0e";
+    t.style.padding = "10px 12px";
+    t.style.borderRadius = "8px";
+    t.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+    t.style.fontWeight = "600";
+    t.style.maxWidth = "340px";
+    t.style.background =
+      type === "success" ? "#B9F5D0" : type === "error" ? "#FFD6DD" : "#E6F0FF";
+    t.style.border = "1px solid rgba(0,0,0,0.08)";
+    t.style.transition = "opacity 200ms ease";
+    t.style.opacity = "1";
+    host.appendChild(t);
+    setTimeout(() => {
+      t.style.opacity = "0";
+      setTimeout(() => t.remove(), 250);
+    }, 3000);
   }
 }
