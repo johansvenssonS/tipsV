@@ -1,17 +1,9 @@
-import { execSync } from "child_process";
 import puppeteer from "puppeteer";
 
 async function getKupong() {
   let browser;
   try {
-    try {
-      //chrome problem med render.com
-      console.log("Chrome not found, installing...");
-      execSync("npx puppeteer browsers install chrome", { stdio: "inherit" });
-    } catch (error) {
-      console.log("Chrome installation failed:", error.message);
-    }
-
+    console.log("[Puppeteer] Launching browser...");
     browser = await puppeteer.launch({
       headless: "new",
       args: [
@@ -25,6 +17,7 @@ async function getKupong() {
         "--disable-blink-features=AutomationControlled",
         "--window-size=1920,1080",
       ],
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
 
     const page = await browser.newPage();
@@ -36,28 +29,44 @@ async function getKupong() {
     page.setDefaultTimeout(60000); // 60 seconds instead of 30
     page.setDefaultNavigationTimeout(60000);
 
-    console.log("Öppnar sidan...");
+    console.log("[Puppeteer] Navigating to svenskaspel.se/stryktipset...");
     await page.goto("https://spela.svenskaspel.se/stryktipset", {
       waitUntil: "networkidle2",
       timeout: 120000,
     });
 
-    console.log("Sidan är öppnad");
+    console.log("[Puppeteer] Page loaded successfully");
 
     // Wait for the specific element to be available
+    console.log("[Puppeteer] Waiting for coupon rows...");
     await page.waitForSelector("ol.coupon-rows li", { timeout: 30000 });
 
     const matcher = await page.$$eval("ol.coupon-rows li", (elements) => {
       return elements.map((elements) => elements.textContent.trim());
     });
 
-    console.log(matcher);
+    console.log(
+      `[Puppeteer] SUCCESS! Scraped ${matcher.length} matches:`,
+      matcher
+    );
+
+    if (!matcher || matcher.length === 0) {
+      throw new Error(
+        "Scraper returned empty array - no matches found on page"
+      );
+    }
+
     return matcher;
   } catch (error) {
-    console.log("Något blev fel:", error);
+    console.error("[Puppeteer] SCRAPING FAILED:", error.message);
+    console.error("[Puppeteer] Full error:", error);
+
+    // Return empty array so server can fall back to last entry
+    // BUT now with proper logging so we can debug
     return [];
   } finally {
     if (browser) {
+      console.log("[Puppeteer] Closing browser...");
       await browser.close();
     }
   }

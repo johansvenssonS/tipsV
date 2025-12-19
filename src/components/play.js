@@ -1,3 +1,5 @@
+import { API_BASE } from "../config.js";
+
 export default class Game extends HTMLElement {
   constructor() {
     super();
@@ -47,7 +49,7 @@ export default class Game extends HTMLElement {
         console.error("No user code found");
         return null;
       }
-      const response = await fetch("https://tipsv.onrender.com/backend/login", {
+      const response = await fetch(`${API_BASE}/backend/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,17 +86,13 @@ export default class Game extends HTMLElement {
     if (!code) return;
     try {
       const listResp = await this.fetchJson(
-        `https://tipsv.onrender.com/backend/entries/list?code=${encodeURIComponent(
-          code
-        )}`
+        `${API_BASE}/backend/entries/list?code=${encodeURIComponent(code)}`
       );
       const items = listResp?.data?.items || [];
       this.populateEntryDropdown(items);
 
       const latestResp = await this.fetchJson(
-        `https://tipsv.onrender.com/backend/entries/latest?code=${encodeURIComponent(
-          code
-        )}`
+        `${API_BASE}/backend/entries/latest?code=${encodeURIComponent(code)}`
       );
       const entry = latestResp?.data?.entry;
       if (entry) {
@@ -163,7 +161,7 @@ export default class Game extends HTMLElement {
   async loadAndApplyEntry(week, year) {
     const code = localStorage.getItem("userCode");
     const resp = await this.fetchJson(
-      `https://tipsv.onrender.com/backend/entries/get?code=${encodeURIComponent(
+      `${API_BASE}/backend/entries/get?code=${encodeURIComponent(
         code
       )}&week=${week}&year=${year}`
     );
@@ -308,14 +306,11 @@ export default class Game extends HTMLElement {
         data: teamData,
       };
 
-      const res = await fetch(
-        "https://tipsv.onrender.com/backend/entries/save",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${API_BASE}/backend/entries/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       if (!res.ok) {
         const text = await res.text().catch(() => "");

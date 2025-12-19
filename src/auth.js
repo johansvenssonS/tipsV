@@ -1,4 +1,6 @@
 // Remove pg import - use backend API instead
+import { API_BASE } from "./config.js";
+
 const auth = {
   isLoggedIn: false,
   currentUser: null,
@@ -18,7 +20,7 @@ const auth = {
   async login(userCode) {
     try {
       // Make API call to backend
-      const response = await fetch("https://tipsv.onrender.com/backend/login", {
+      const response = await fetch(`${API_BASE}/backend/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -57,16 +59,13 @@ const auth = {
   async register(username) {
     try {
       // Make API call to backend
-      const response = await fetch(
-        "https://tipsv.onrender.com/backend/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ name: username }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/backend/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: username }),
+      });
 
       if (!response.ok) {
         throw new Error("Registration failed");

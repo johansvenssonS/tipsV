@@ -1,3 +1,5 @@
+import { API_BASE } from "../config.js";
+
 export default class Kupong extends HTMLElement {
   constructor() {
     super();
@@ -14,7 +16,7 @@ export default class Kupong extends HTMLElement {
     `;
 
     try {
-      const response = await fetch("https://tipsv.onrender.com/kupong");
+      const response = await fetch(`${API_BASE}/kupong`);
       const data = await response.json();
       this.kupong = data.kupong || [];
       console.log(this.kupong);

@@ -5,6 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "pwsh ../local-dev/test-endpoints.ps1",
     "postinstall": "npx puppeteer browsers install chrome",
     "build": "npm install && npx puppeteer browsers install chrome"
   },
