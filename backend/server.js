@@ -21,6 +21,8 @@ const app = express();
 const allowedOrigins = [
   "https://johansvenssons.github.io",
   "http://127.0.0.1:3000",
+  "http://localhost:3000",
+  "http://localhost:3001",
 ];
 app.use(cors({ origin: allowedOrigins }));
 app.use(express.json()); // Add JSON parsing middleware
@@ -191,29 +193,63 @@ app.post("/backend/entries/lock", async (req, res) => {
 
 // /kupong endpoint
 app.get("/kupong", async (req, res) => {
-  const today = new Date();
-  const week = getWeekNumber(today);
-  const year = today.getFullYear();
-  const day = today.getDay(); // 4 = Thursday
-  const hours = today.getHours();
+  // Use Swedish time (UTC+1) for scraping window logic
+  const now = new Date();
+  const swedenTime = new Date(
+    now.toLocaleString("en-US", { timeZone: "Europe/Stockholm" })
+  );
+  const week = getWeekNumber(swedenTime);
+  const year = swedenTime.getFullYear();
+  const day = swedenTime.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  const hours = swedenTime.getHours();
 
   try {
+    console.log(
+      `[/kupong] Checking week ${week}/${year}, day=${day}, hour=${hours} (Sweden time)`
+    );
+
+    // Check if we already have data for this week
     let kupong = await loadKupongFromDb(week, year);
 
     if (kupong) {
+      console.log(
+        `[/kupong] ✅ Found week ${week}/${year} in DB - using cached data`
+      );
       res.json({ kupong });
       return;
     }
 
-    if (day >= 4 && hours >= 12) {
+    console.log(`[/kupong] No data for week ${week}/${year} in DB`);
+
+    // Scraping window: Thursday 12:00 - Saturday 18:00
+    const inScrapingWindow =
+      (day === 4 && hours >= 12) || // Thursday from noon onwards
+      day === 5 || // Friday (all day)
+      (day === 6 && hours < 18); // Saturday until 18:00
+
+    if (inScrapingWindow) {
+      console.log(
+        `[/kupong] ✅ In scraping window (Thu 12:00 - Sat 18:00), attempting scrape...`
+      );
       kupong = await getKupong();
+
       if (kupong && kupong.length > 0) {
+        console.log(
+          `[/kupong] 🎉 Scrape successful! Got ${kupong.length} matches`
+        );
         await saveKupongToDb(kupong, week, year);
         res.json({ kupong });
         return;
+      } else {
+        console.warn(`[/kupong] ❌ SCRAPE FAILED or returned empty array`);
       }
+    } else {
+      console.log(
+        `[/kupong] ⏰ Outside scraping window (need Thu 12:00 - Sat 18:00)`
+      );
     }
 
+    console.log(`[/kupong] 📁 Falling back to last entry from DB`);
     const lastKupong = await getLastEntry();
     if (lastKupong) {
       res.json({
@@ -235,9 +271,9 @@ app.get("/", (req, res) => {
   res.send("StrykVänner backend server är igång!");
 });
 
-// Use the Render-provided port or 3000 if running locally
-const PORT = process.env.PORT || 3000;
+// Use the Render-provided port or 3001 if running locally
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+  console.log(`🚀 Backend server listening on port ${PORT}`);
 });

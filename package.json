@@ -4,6 +4,7 @@
   "scripts": {
     "start": "npx http-server . -p 3000",
     "dev": "concurrently \"npx tailwindcss -i ./style.css -o ./dist/output.css --watch\" \"npx http-server . -p 3000 -o\"",
+    "dev:full": "concurrently \"npm run dev\" \"cd backend && npm run dev\" --names \"frontend,backend\" --prefix-colors \"cyan,magenta\"",
     "build": "echo 'Build script not configured yet'",
     "test": "echo 'No tests specified'"
   },

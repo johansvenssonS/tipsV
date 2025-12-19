@@ -1,5 +1,7 @@
 import auth from "../auth.js";
 
+import { API_BASE } from "../config.js";
+
 export default class Team extends HTMLElement {
   constructor() {
     super();
@@ -120,19 +122,16 @@ export default class Team extends HTMLElement {
 
     try {
       // Send to backend
-      const response = await fetch(
-        "https://tipsv.onrender.com/backend/update-team",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            code: this.savedCode,
-            teamData: teamData,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/backend/update-team`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          code: this.savedCode,
+          teamData: teamData,
+        }),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to save team");
