@@ -2,8 +2,5 @@ services:
   - type: web
     name: stryktipset-backend
     env: node
-    buildCommand: npm install && npx puppeteer browsers install chrome
+    buildCommand: npm install && node install-chrome.mjs
     startCommand: npm start
-    envVars:
-      - key: PUPPETEER_CACHE_DIR
-        value: /opt/render/.cache/puppeteer
