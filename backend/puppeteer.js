@@ -4,6 +4,9 @@ async function getKupong() {
   let browser;
   try {
     console.log("[Puppeteer] Launching browser...");
+    console.log("[Puppeteer] PUPPETEER_EXECUTABLE_PATH:", process.env.PUPPETEER_EXECUTABLE_PATH || 'not set');
+    console.log("[Puppeteer] PUPPETEER_CACHE_DIR:", process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer');
+    console.log("[Puppeteer] NODE_ENV:", process.env.NODE_ENV || 'not set');
     browser = await puppeteer.launch({
       headless: "new",
       args: [
