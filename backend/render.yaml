@@ -4,3 +4,8 @@ services:
     env: node
     buildCommand: npm install && npx puppeteer browsers install chrome
     startCommand: npm start
+    envVars:
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: false
+      - key: PUPPETEER_EXECUTABLE_PATH
+        sync: false
