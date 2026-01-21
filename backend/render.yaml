@@ -2,5 +2,5 @@ services:
   - type: web
     name: stryktipset-backend
     env: node
-    buildCommand: npm install
+    buildCommand: npm install && node install-chrome.mjs
     startCommand: npm start

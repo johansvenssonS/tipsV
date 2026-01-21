@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "pwsh ../local-dev/test-endpoints.ps1",
-    "postinstall": "node -e \"try { require('puppeteer'); console.log('[Puppeteer] Package installed successfully'); } catch(e) { console.error('[Puppeteer] Installation check failed:', e.message); }\""
+    "install-chrome": "node install-chrome.mjs"
   },
   "author": "Johan Svensson",
   "license": "MIT",
