@@ -5,19 +5,12 @@ async function getKupong() {
   try {
     console.log("[Puppeteer] Launching browser...");
     console.log("[Puppeteer] PUPPETEER_EXECUTABLE_PATH:", process.env.PUPPETEER_EXECUTABLE_PATH || 'not set');
-    console.log("[Puppeteer] PUPPETEER_CACHE_DIR:", process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer');
+    console.log("[Puppeteer] PUPPETEER_CACHE_DIR:", process.env.PUPPETEER_CACHE_DIR || 'default');
     console.log("[Puppeteer] NODE_ENV:", process.env.NODE_ENV || 'not set');
     
-    let execPath;
-    try {
-      execPath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
-    } catch (error) {
-      console.log("[Puppeteer] Could not auto-detect Chrome path, using undefined");
-      execPath = undefined;
-    }
-    console.log("[Puppeteer] Using executable path:", execPath || 'auto-detect');
-    
-    browser = await puppeteer.launch({
+    // Let Puppeteer handle browser path automatically
+    // It will use PUPPETEER_EXECUTABLE_PATH if set, otherwise auto-detect
+    const launchOptions = {
       headless: "new",
       args: [
         "--no-sandbox",
@@ -30,8 +23,17 @@ async function getKupong() {
         "--disable-blink-features=AutomationControlled",
         "--window-size=1920,1080",
       ],
-      executablePath: execPath,
-    });
+    };
+    
+    // Only set executablePath if explicitly provided
+    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
+      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
+      console.log("[Puppeteer] Using explicit path:", launchOptions.executablePath);
+    } else {
+      console.log("[Puppeteer] Letting Puppeteer auto-detect Chrome location");
+    }
+    
+    browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
     await page.setUserAgent(
