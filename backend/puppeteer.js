@@ -1,4 +1,5 @@
 import puppeteer from "puppeteer";
+import { existsSync } from "fs";
 
 async function getKupong() {
   let browser;
@@ -7,6 +8,7 @@ async function getKupong() {
     console.log("[Puppeteer] PUPPETEER_EXECUTABLE_PATH:", process.env.PUPPETEER_EXECUTABLE_PATH || 'not set');
     console.log("[Puppeteer] PUPPETEER_CACHE_DIR:", process.env.PUPPETEER_CACHE_DIR || 'default');
     console.log("[Puppeteer] NODE_ENV:", process.env.NODE_ENV || 'not set');
+    console.log("[Puppeteer] Current directory:", process.cwd());
     
     // Let Puppeteer handle browser path automatically
     // It will use PUPPETEER_EXECUTABLE_PATH if set, otherwise auto-detect
@@ -29,10 +31,20 @@ async function getKupong() {
     if (process.env.PUPPETEER_EXECUTABLE_PATH) {
       launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
       console.log("[Puppeteer] Using explicit path:", launchOptions.executablePath);
+      console.log("[Puppeteer] Path exists:", existsSync(launchOptions.executablePath));
     } else {
       console.log("[Puppeteer] Letting Puppeteer auto-detect Chrome location");
+      // Try to get the auto-detected path for logging
+      try {
+        const autoPath = puppeteer.executablePath();
+        console.log("[Puppeteer] Auto-detected path:", autoPath);
+        console.log("[Puppeteer] Auto-detected path exists:", existsSync(autoPath));
+      } catch (e) {
+        console.log("[Puppeteer] Could not auto-detect path:", e.message);
+      }
     }
     
+    console.log("[Puppeteer] Attempting to launch browser...");
     browser = await puppeteer.launch(launchOptions);
 
     const page = await browser.newPage();
