@@ -8,7 +8,13 @@ async function getKupong() {
     console.log("[Puppeteer] PUPPETEER_CACHE_DIR:", process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer');
     console.log("[Puppeteer] NODE_ENV:", process.env.NODE_ENV || 'not set');
     
-    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+    let execPath;
+    try {
+      execPath = process.env.PUPPETEER_EXECUTABLE_PATH || puppeteer.executablePath();
+    } catch (error) {
+      console.log("[Puppeteer] Could not auto-detect Chrome path, using undefined");
+      execPath = undefined;
+    }
     console.log("[Puppeteer] Using executable path:", execPath || 'auto-detect');
     
     browser = await puppeteer.launch({
