@@ -6,7 +6,6 @@
  */
 
 import { install } from '@puppeteer/browsers';
-import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -17,8 +16,7 @@ async function installChrome() {
   try {
     console.log('[Install Chrome] Starting Chrome installation...');
     
-    // Read the Puppeteer config to get the cache directory
-    const puppeteerrcPath = join(__dirname, '.puppeteerrc.cjs');
+    // Use the same cache directory as configured in .puppeteerrc.cjs
     const cacheDir = join(__dirname, '.cache', 'puppeteer');
     
     console.log('[Install Chrome] Cache directory:', cacheDir);
