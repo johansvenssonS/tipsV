@@ -7,6 +7,10 @@ async function getKupong() {
     console.log("[Puppeteer] PUPPETEER_EXECUTABLE_PATH:", process.env.PUPPETEER_EXECUTABLE_PATH || 'not set');
     console.log("[Puppeteer] PUPPETEER_CACHE_DIR:", process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer');
     console.log("[Puppeteer] NODE_ENV:", process.env.NODE_ENV || 'not set');
+    
+    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH || undefined;
+    console.log("[Puppeteer] Using executable path:", execPath || 'auto-detect');
+    
     browser = await puppeteer.launch({
       headless: "new",
       args: [
@@ -20,7 +24,7 @@ async function getKupong() {
         "--disable-blink-features=AutomationControlled",
         "--window-size=1920,1080",
       ],
-      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+      executablePath: execPath,
     });
 
     const page = await browser.newPage();
