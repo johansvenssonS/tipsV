@@ -208,6 +208,25 @@ app.get("/kupong", async (req, res) => {
       `[/kupong] Checking week ${week}/${year}, day=${day}, hour=${hours} (Sweden time)`
     );
 
+    // In development/local mode, skip database and always scrape
+    // Only run in dev mode if NODE_ENV is explicitly NOT set to 'production'
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    console.log(`[/kupong] Environment: ${process.env.NODE_ENV || 'not set'}, isDevelopment: ${isDevelopment}`);
+
+    if (isDevelopment) {
+      console.log(`[/kupong] 🔧 DEV MODE - Skipping database, scraping directly...`);
+      const kupong = await getKupong();
+      if (kupong && kupong.length > 0) {
+        console.log(`[/kupong] 🎉 Scrape successful! Got ${kupong.length} matches`);
+        res.json({ kupong });
+      } else {
+        console.warn(`[/kupong] ❌ SCRAPE FAILED or returned empty array`);
+        res.status(500).json({ error: "Scraping failed in dev mode" });
+      }
+      return;
+    }
+
+    // PRODUCTION MODE: Use database
     // Check if we already have data for this week
     let kupong = await loadKupongFromDb(week, year);
 
@@ -220,16 +239,19 @@ app.get("/kupong", async (req, res) => {
     }
 
     console.log(`[/kupong] No data for week ${week}/${year} in DB`);
-
-    // Scraping window: Thursday 12:00 - Saturday 18:00
+    
+    // Scraping window: Tuesday 12:00 - Sunday (end of day)
     const inScrapingWindow =
-      (day === 4 && hours >= 12) || // Thursday from noon onwards
+      (day === 2 && hours >= 12) || // Tuesday from noon onwards
+      day === 3 || // Wednesday (all day)
+      day === 4 || // Thursday (all day)  
       day === 5 || // Friday (all day)
-      (day === 6 && hours < 18); // Saturday until 18:00
+      day === 6 || // Saturday (all day)
+      day === 0; // Sunday (all day)
 
     if (inScrapingWindow) {
       console.log(
-        `[/kupong] ✅ In scraping window (Thu 12:00 - Sat 18:00), attempting scrape...`
+        `[/kupong] ✅ In scraping window (Tue 12:00 - Sun), attempting scrape...`
       );
       kupong = await getKupong();
 
@@ -245,7 +267,7 @@ app.get("/kupong", async (req, res) => {
       }
     } else {
       console.log(
-        `[/kupong] ⏰ Outside scraping window (need Thu 12:00 - Sat 18:00)`
+        `[/kupong] ⏰ Outside scraping window (need Tue 12:00 - Sun)`
       );
     }
 
