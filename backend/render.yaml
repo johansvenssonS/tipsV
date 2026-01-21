@@ -2,10 +2,5 @@ services:
   - type: web
     name: stryktipset-backend
     env: node
-    buildCommand: npm install && npx puppeteer browsers install chrome
+    buildCommand: npm install && npx puppeteer browsers install chrome@131.0.6778.85
     startCommand: npm start
-    envVars:
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: false
-      - key: PUPPETEER_EXECUTABLE_PATH
-        sync: false
