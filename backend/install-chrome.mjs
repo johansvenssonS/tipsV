@@ -22,9 +22,10 @@ async function installChrome() {
     console.log('[Install Chrome] Cache directory:', cacheDir);
     console.log('[Install Chrome] Installing Chrome...');
     
+    // Use latest version instead of 'stable' which has 404 issues
     const result = await install({
       browser: 'chrome',
-      buildId: 'stable',
+      buildId: 'latest',
       cacheDir: cacheDir,
     });
     
