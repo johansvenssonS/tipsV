@@ -1,0 +1,16 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-accent: 168 58 48; /* #a83a30 */
+  --color-accent-dark: 125 43 35; /* #7d2b23 */
+  --color-ink: 28 25 23; /* near-black warm neutral */
+  --color-surface: 250 249 247; /* warm off-white */
+}
+
+body {
+  font-family: "Outfit", system-ui, sans-serif;
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-ink));
+}
