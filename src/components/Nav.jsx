@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
+import { asset } from "../lib/asset.js";
 
 const linkClass = ({ isActive }) =>
   `rounded-md px-3 py-2 text-sm font-medium transition-colors ${
@@ -16,7 +17,7 @@ export default function Nav() {
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3">
         <NavLink to="/" className="flex items-center">
           <img
-            src="/static/logo/tipsvänner.png"
+            src={asset("static/logo/tipsvänner.png")}
             alt="Tipsvänner"
             className="h-10 w-auto"
           />
