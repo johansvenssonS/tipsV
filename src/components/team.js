@@ -165,6 +165,7 @@ export default class Team extends HTMLElement {
         <a class="aLink" href="">Hem</a>
         <a class="aLink" href="#team">Mitt Lag</a>
         <a href="#play">DevPlay</a>
+        <a class="aLink" href="#leaderboard">Topplista</a>
       </div>
     </div>
     <div class="mainT">

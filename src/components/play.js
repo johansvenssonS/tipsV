@@ -1,9 +1,31 @@
 import { API_BASE } from "../config.js";
 
+// Deterministic PRNG so a given team+week always produces the same
+// match-to-player assignment (varies week to week and team to team, but
+// doesn't reshuffle on every page reload before an entry is submitted).
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
+  }
+  return hash;
+}
+
+function mulberry32(seed) {
+  let state = seed | 0;
+  return function () {
+    state = (state + 0x6d2b79f5) | 0;
+    let t = Math.imul(state ^ (state >>> 15), 1 | state);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
 export default class Game extends HTMLElement {
   constructor() {
     super();
     this.teamName = localStorage.getItem("currentUser");
+    this.code = localStorage.getItem("userCode");
     this.userData = null;
     this.playerColors = [
       "#FF6B6B",
@@ -97,6 +119,7 @@ export default class Game extends HTMLElement {
       const entry = latestResp?.data?.entry;
       if (entry) {
         this.applyEntry(entry);
+        this.applyEntryPlayers(entry);
         this.setEntryStatus(entry);
         const canEdit =
           !entry.locked && this.isCurrentWeek(entry.week, entry.year);
@@ -104,6 +127,7 @@ export default class Game extends HTMLElement {
         this.setEditable(canEdit);
         const select = this.querySelector("#entry-select");
         if (select) select.value = `${entry.year}-${entry.week}`;
+        await this.loadAndShowResults(entry.week, entry.year);
       } else {
         this.setEditButtonAvailability(true);
         this.setEditable(true);
@@ -168,16 +192,61 @@ export default class Game extends HTMLElement {
     const entry = resp?.data?.entry;
     if (entry) {
       this.applyEntry(entry);
+      this.applyEntryPlayers(entry);
       this.setEntryStatus(entry);
       const editable = !entry.locked && this.isCurrentWeek(week, year);
       this.setEditButtonAvailability(editable);
       this.setEditable(editable);
+      await this.loadAndShowResults(week, year);
     }
   }
 
   applyEntry(entry) {
     const kupongEl = this.querySelector("my-kupong");
     kupongEl?.applySelections(entry?.data?.kupong || []);
+  }
+
+  // Renders the player table using the assignment actually saved with this
+  // entry, instead of the live (freshly-shuffled) this.userData.players —
+  // otherwise browsing a past week shows who's "currently" assigned rather
+  // than who was actually responsible for each match that week.
+  applyEntryPlayers(entry) {
+    const players = entry?.data?.players;
+    if (!Array.isArray(players) || players.length === 0) return;
+    this.userData = this.userData || {};
+    this.userData.players = players;
+    this.renderPlayerTable();
+  }
+
+  async loadAndShowResults(week, year) {
+    try {
+      const resp = await this.fetchJson(
+        `${API_BASE}/backend/results?week=${week}&year=${year}`
+      );
+      const results = resp?.data?.results || [];
+      this.applyResultsColoring(results);
+    } catch (e) {
+      console.error("results load error:", e);
+    }
+  }
+
+  applyResultsColoring(results) {
+    const kupongEl = this.querySelector("my-kupong");
+    if (!kupongEl) return;
+    const rows = kupongEl.querySelectorAll(".match-row");
+    kupongEl
+      .querySelectorAll(".bet-button.result-correct, .bet-button.result-incorrect")
+      .forEach((btn) => btn.classList.remove("result-correct", "result-incorrect"));
+
+    results.forEach((r) => {
+      if (!r.outcome) return;
+      const row = rows[r.index - 1];
+      if (!row) return;
+      row.querySelectorAll(".bet-button.checked").forEach((btn) => {
+        const col = btn.getAttribute("data-col");
+        btn.classList.add(col === r.outcome ? "result-correct" : "result-incorrect");
+      });
+    });
   }
 
   setEntryStatus(entry) {
@@ -378,8 +447,11 @@ export default class Game extends HTMLElement {
 
     const allMatchIndices = Array.from({ length: totalMatches }, (_, i) => i);
 
+    const weekInfo = this.getWeekInfo(new Date());
+    const seed = hashString(`${this.code}-${weekInfo.week}-${weekInfo.year}`);
+    const rand = mulberry32(seed);
     for (let i = allMatchIndices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(rand() * (i + 1));
       [allMatchIndices[i], allMatchIndices[j]] = [
         allMatchIndices[j],
         allMatchIndices[i],
@@ -476,6 +548,7 @@ export default class Game extends HTMLElement {
         <a class="aLink" href="">Hem</a>
         <a class="aLink" href="#team">Mitt Lag</a>
         <a href="#play">DevPlay</a>
+        <a class="aLink" href="#leaderboard">Topplista</a>
       </div>
     </div>
     <div class="mainT">

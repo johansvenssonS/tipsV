@@ -22,6 +22,10 @@ customElements.define("login-view", Login);
 import Register from "./components/register.js";
 customElements.define("register-view", Register);
 
+//LEADERBOARD VIEW
+import Leaderboard from "./components/leaderboard.js";
+customElements.define("leaderboard-view", Leaderboard);
+
 //ROUTER LOGIC
 
 import Router from "./router.js";
