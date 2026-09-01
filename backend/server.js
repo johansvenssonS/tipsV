@@ -16,6 +16,14 @@ import {
   getEntry,
   listEntries,
 } from "./entries-db.js";
+import {
+  upsertResults,
+  getResults,
+  setResultOverride,
+  shouldAttemptFetch,
+  recordFetchAttempt,
+} from "./results-db.js";
+import { resolveWeekResults } from "./football-api.js";
 
 const app = express();
 const allowedOrigins = [
@@ -36,6 +44,20 @@ function getWeekNumber(date) {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+}
+
+// Minimum minutes between real football-API fetch attempts for a given
+// week, regardless of how many /backend/results requests come in — keeps
+// us well under API-Football's free-tier daily request cap.
+const RESULTS_FETCH_COOLDOWN_MINUTES = Number(
+  process.env.RESULTS_FETCH_COOLDOWN_MINUTES || 60
+);
+
+function getSwedenTime() {
+  const now = new Date();
+  return new Date(
+    now.toLocaleString("en-US", { timeZone: "Europe/Stockholm" })
+  );
 }
 
 // Auth endpoints
@@ -188,6 +210,199 @@ app.post("/backend/entries/lock", async (req, res) => {
   } catch (e) {
     console.error("entries lock error:", e);
     res.status(500).json({ error: "Failed to lock entry" });
+  }
+});
+
+// Results (actual match outcomes, matched against a saved kupong)
+app.get("/backend/results", async (req, res) => {
+  try {
+    const week = Number(req.query.week);
+    const year = Number(req.query.year);
+    if (!week || !year)
+      return res.status(400).json({ error: "week, year required" });
+
+    let results = await getResults(week, year);
+    const isComplete = results.length === 13 && results.every((r) => r.outcome);
+    const force = req.query.force === "true";
+
+    if (!isComplete) {
+      const sweden = getSwedenTime();
+      const day = sweden.getDay(); // 0=Sun, 1=Mon, 5=Fri, 6=Sat
+      const inResultsWindow = force || day === 5 || day === 6 || day === 0 || day === 1;
+
+      if (inResultsWindow) {
+        const canFetch = await shouldAttemptFetch(
+          week,
+          year,
+          RESULTS_FETCH_COOLDOWN_MINUTES
+        );
+        if (canFetch) {
+          const kupongMatches = await loadKupongFromDb(week, year);
+          if (kupongMatches) {
+            await recordFetchAttempt(week, year);
+            try {
+              const fresh = await resolveWeekResults(week, year, kupongMatches);
+              await upsertResults({ week, year, results: fresh });
+              results = await getResults(week, year);
+            } catch (err) {
+              console.error("[/backend/results] fetch failed:", err.message);
+            }
+          }
+        }
+      }
+    }
+
+    res.json({ results });
+  } catch (e) {
+    console.error("results error:", e);
+    res.status(500).json({ error: "Failed to load results" });
+  }
+});
+
+app.post("/backend/results/override", async (req, res) => {
+  try {
+    const { week, year, matchIndex, outcome } = req.body || {};
+    if (!week || !year || !matchIndex || !outcome)
+      return res
+        .status(400)
+        .json({ error: "week, year, matchIndex, outcome required" });
+
+    await setResultOverride({
+      week: Number(week),
+      year: Number(year),
+      matchIndex: Number(matchIndex),
+      outcome,
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === "INVALID_OUTCOME") {
+      return res.status(400).json({ error: e.message });
+    }
+    console.error("results override error:", e);
+    res.status(500).json({ error: "Failed to override result" });
+  }
+});
+
+// Scoreboard: one team's picks for a week, scored against results
+app.get("/backend/scoreboard", async (req, res) => {
+  try {
+    const { code } = req.query;
+    const week = Number(req.query.week);
+    const year = Number(req.query.year);
+    if (!code || !week || !year)
+      return res.status(400).json({ error: "code, week, year required" });
+
+    const entry = await getEntry(code, week, year);
+    if (!entry) return res.json({ scoreboard: null });
+
+    const results = await getResults(week, year);
+    const outcomeByIndex = new Map(results.map((r) => [r.index, r]));
+
+    const matches = (entry.data.kupong || []).map((m) => {
+      const r = outcomeByIndex.get(m.index);
+      const resolved = !!(r && r.outcome);
+      const correct = resolved && (m.picks || []).some((p) => p.col === r.outcome);
+      return {
+        index: m.index,
+        match: m.match,
+        outcome: r?.outcome ?? null,
+        resolved,
+        correct,
+      };
+    });
+
+    const totalResolved = matches.filter((m) => m.resolved).length;
+    const totalCorrect = matches.filter((m) => m.correct).length;
+
+    const players = (entry.data.players || []).map((p) => {
+      const assignedIndices = (p.assignedGames || []).map((g) => g.index);
+      const assignedMatches = matches.filter((m) =>
+        assignedIndices.includes(m.index)
+      );
+      return {
+        name: p.name,
+        color: p.color,
+        assignedCount: assignedIndices.length,
+        resolvedCount: assignedMatches.filter((m) => m.resolved).length,
+        correctCount: assignedMatches.filter((m) => m.correct).length,
+      };
+    });
+
+    res.json({
+      scoreboard: {
+        team: entry.team,
+        week,
+        year,
+        totalResolved,
+        totalCorrect,
+        matches,
+        players,
+      },
+    });
+  } catch (e) {
+    console.error("scoreboard error:", e);
+    res.status(500).json({ error: "Failed to load scoreboard" });
+  }
+});
+
+// Leaderboard: per-player totals across all of a team's saved weeks
+app.get("/backend/leaderboard", async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) return res.status(400).json({ error: "code is required" });
+
+    const items = await listEntries(code);
+    const byPlayer = new Map();
+
+    for (const item of items) {
+      const entry = await getEntry(code, item.week, item.year);
+      if (!entry) continue;
+      const results = await getResults(item.week, item.year);
+      const outcomeByIndex = new Map(results.map((r) => [r.index, r]));
+
+      for (const p of entry.data.players || []) {
+        const stats = byPlayer.get(p.name) || {
+          name: p.name,
+          color: p.color,
+          totalCorrect: 0,
+          totalResolved: 0,
+          weeksPlayed: 0,
+        };
+
+        const assignedGames = p.assignedGames || [];
+        if (assignedGames.length > 0) {
+          stats.weeksPlayed++;
+        }
+
+        for (const g of assignedGames) {
+          const r = outcomeByIndex.get(g.index);
+          if (r && r.outcome) {
+            stats.totalResolved++;
+            const match = (entry.data.kupong || []).find(
+              (m) => m.index === g.index
+            );
+            const correct = (match?.picks || []).some(
+              (pick) => pick.col === r.outcome
+            );
+            if (correct) stats.totalCorrect++;
+          }
+        }
+
+        byPlayer.set(p.name, stats);
+      }
+    }
+
+    const leaderboard = Array.from(byPlayer.values())
+      .map((s) => ({
+        ...s,
+        average: s.totalResolved ? s.totalCorrect / s.totalResolved : 0,
+      }))
+      .sort((a, b) => b.totalCorrect - a.totalCorrect || b.average - a.average);
+
+    res.json({ leaderboard });
+  } catch (e) {
+    console.error("leaderboard error:", e);
+    res.status(500).json({ error: "Failed to load leaderboard" });
   }
 });
 
