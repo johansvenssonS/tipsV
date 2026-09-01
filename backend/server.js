@@ -223,11 +223,12 @@ app.get("/backend/results", async (req, res) => {
 
     let results = await getResults(week, year);
     const isComplete = results.length === 13 && results.every((r) => r.outcome);
+    const force = req.query.force === "true";
 
     if (!isComplete) {
       const sweden = getSwedenTime();
       const day = sweden.getDay(); // 0=Sun, 1=Mon, 5=Fri, 6=Sat
-      const inResultsWindow = day === 5 || day === 6 || day === 0 || day === 1;
+      const inResultsWindow = force || day === 5 || day === 6 || day === 0 || day === 1;
 
       if (inResultsWindow) {
         const canFetch = await shouldAttemptFetch(

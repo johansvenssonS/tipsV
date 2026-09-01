@@ -55,9 +55,11 @@ export async function recordFetchAttempt(week, year) {
 export async function upsertResults({ week, year, results }) {
   await ensureTable();
   for (const r of results) {
+    const outcome = r.outcome ?? null;
+    const resolvedAt = outcome ? new Date() : null;
     await pool.query(
       `INSERT INTO weekly_results (week, year, match_index, match_label, outcome, home_score, away_score, matched, resolved_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, CASE WHEN $5 IS NOT NULL THEN NOW() ELSE NULL END)
+       VALUES ($1, $2, $3, $4, $5::char(1), $6, $7, $8, $9::timestamp)
        ON CONFLICT (week, year, match_index)
        DO UPDATE SET
          match_label = EXCLUDED.match_label,
@@ -74,10 +76,11 @@ export async function upsertResults({ week, year, results }) {
         year,
         r.index,
         r.label,
-        r.outcome ?? null,
+        outcome,
         r.homeScore ?? null,
         r.awayScore ?? null,
         !!r.matched,
+        resolvedAt,
       ]
     );
   }
