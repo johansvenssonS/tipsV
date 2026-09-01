@@ -29,6 +29,11 @@ export default class Router extends HTMLElement {
         subject: "game-view",
         requiresAuth: true,
       },
+      leaderboard: {
+        view: "<leaderboard-view></leaderboard-view>",
+        subject: "leaderboard-view",
+        requiresAuth: true,
+      },
     };
   }
 

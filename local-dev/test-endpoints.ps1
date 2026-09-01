@@ -43,6 +43,39 @@ try {
 }
 Write-Host ""
 
+$week = Get-Date -UFormat %V
+$year = Get-Date -UFormat %Y
+
+Write-Host "4️⃣  Testing results endpoint (current week)..." -ForegroundColor Yellow
+Write-Host "GET $BASE_URL/backend/results?week=$week&year=$year" -ForegroundColor Gray
+try {
+    $response = Invoke-WebRequest -Uri "$BASE_URL/backend/results?week=$week&year=$year" -UseBasicParsing
+    Write-Host $response.Content -ForegroundColor Green
+} catch {
+    Write-Host "❌ Failed: $_" -ForegroundColor Red
+}
+Write-Host ""
+
+Write-Host "5️⃣  Testing scoreboard with test code..." -ForegroundColor Yellow
+Write-Host "GET $BASE_URL/backend/scoreboard?code=TESTCODE&week=$week&year=$year" -ForegroundColor Gray
+try {
+    $response = Invoke-WebRequest -Uri "$BASE_URL/backend/scoreboard?code=TESTCODE&week=$week&year=$year" -UseBasicParsing
+    Write-Host $response.Content -ForegroundColor Green
+} catch {
+    Write-Host "❌ Failed: $_" -ForegroundColor Red
+}
+Write-Host ""
+
+Write-Host "6️⃣  Testing leaderboard with test code..." -ForegroundColor Yellow
+Write-Host "GET $BASE_URL/backend/leaderboard?code=TESTCODE" -ForegroundColor Gray
+try {
+    $response = Invoke-WebRequest -Uri "$BASE_URL/backend/leaderboard?code=TESTCODE" -UseBasicParsing
+    Write-Host $response.Content -ForegroundColor Green
+} catch {
+    Write-Host "❌ Failed: $_" -ForegroundColor Red
+}
+Write-Host ""
+
 Write-Host "======================================" -ForegroundColor Cyan
 Write-Host "✅ Test complete!" -ForegroundColor Green
 Write-Host "======================================" -ForegroundColor Cyan

@@ -59,6 +59,7 @@ export default class Register extends HTMLElement {
       <div class="links">
         <a class="aLink" href="">Hem</a>
         <a class="aLink" href="#team">Mitt Lag</a>
+        <a class="aLink" href="#leaderboard">Topplista</a>
       </div>
     </div>
 
