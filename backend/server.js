@@ -20,6 +20,8 @@ import {
   upsertResults,
   getResults,
   setResultOverride,
+  shouldAttemptFetch,
+  recordFetchAttempt,
 } from "./results-db.js";
 import { resolveWeekResults } from "./football-api.js";
 
@@ -43,6 +45,13 @@ function getWeekNumber(date) {
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
 }
+
+// Minimum minutes between real football-API fetch attempts for a given
+// week, regardless of how many /backend/results requests come in — keeps
+// us well under API-Football's free-tier daily request cap.
+const RESULTS_FETCH_COOLDOWN_MINUTES = Number(
+  process.env.RESULTS_FETCH_COOLDOWN_MINUTES || 60
+);
 
 function getSwedenTime() {
   const now = new Date();
@@ -221,14 +230,22 @@ app.get("/backend/results", async (req, res) => {
       const inResultsWindow = day === 5 || day === 6 || day === 0 || day === 1;
 
       if (inResultsWindow) {
-        const kupongMatches = await loadKupongFromDb(week, year);
-        if (kupongMatches) {
-          try {
-            const fresh = await resolveWeekResults(week, year, kupongMatches);
-            await upsertResults({ week, year, results: fresh });
-            results = await getResults(week, year);
-          } catch (err) {
-            console.error("[/backend/results] fetch failed:", err.message);
+        const canFetch = await shouldAttemptFetch(
+          week,
+          year,
+          RESULTS_FETCH_COOLDOWN_MINUTES
+        );
+        if (canFetch) {
+          const kupongMatches = await loadKupongFromDb(week, year);
+          if (kupongMatches) {
+            await recordFetchAttempt(week, year);
+            try {
+              const fresh = await resolveWeekResults(week, year, kupongMatches);
+              await upsertResults({ week, year, results: fresh });
+              results = await getResults(week, year);
+            } catch (err) {
+              console.error("[/backend/results] fetch failed:", err.message);
+            }
           }
         }
       }

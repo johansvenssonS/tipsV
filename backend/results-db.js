@@ -17,6 +17,39 @@ async function ensureTable() {
       UNIQUE (week, year, match_index)
     );
   `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS results_fetch_log (
+      week INTEGER NOT NULL,
+      year INTEGER NOT NULL,
+      last_attempted_at TIMESTAMP NOT NULL,
+      PRIMARY KEY (week, year)
+    );
+  `);
+}
+
+// Throttles calls out to the football API — persisted in the DB (not
+// in-memory) since Render's free tier can cold-start between requests,
+// which would otherwise reset an in-process cooldown.
+export async function shouldAttemptFetch(week, year, cooldownMinutes) {
+  await ensureTable();
+  const res = await pool.query(
+    `SELECT last_attempted_at FROM results_fetch_log WHERE week=$1 AND year=$2`,
+    [week, year]
+  );
+  const lastAttempt = res.rows[0]?.last_attempted_at;
+  if (!lastAttempt) return true;
+  const minutesSince = (Date.now() - new Date(lastAttempt).getTime()) / 60000;
+  return minutesSince >= cooldownMinutes;
+}
+
+export async function recordFetchAttempt(week, year) {
+  await ensureTable();
+  await pool.query(
+    `INSERT INTO results_fetch_log (week, year, last_attempted_at)
+     VALUES ($1, $2, NOW())
+     ON CONFLICT (week, year) DO UPDATE SET last_attempted_at = NOW()`,
+    [week, year]
+  );
 }
 
 export async function upsertResults({ week, year, results }) {
