@@ -24,6 +24,23 @@ echo "GET $BASE_URL/backend/entries/list?code=TESTCODE"
 curl -s "$BASE_URL/backend/entries/list?code=TESTCODE" && echo "" || echo "❌ Failed"
 echo ""
 
+echo "4️⃣  Testing results endpoint (current week)..."
+WEEK=$(date +%V)
+YEAR=$(date +%Y)
+echo "GET $BASE_URL/backend/results?week=$WEEK&year=$YEAR"
+curl -s "$BASE_URL/backend/results?week=$WEEK&year=$YEAR" && echo "" || echo "❌ Failed"
+echo ""
+
+echo "5️⃣  Testing scoreboard with test code..."
+echo "GET $BASE_URL/backend/scoreboard?code=TESTCODE&week=$WEEK&year=$YEAR"
+curl -s "$BASE_URL/backend/scoreboard?code=TESTCODE&week=$WEEK&year=$YEAR" && echo "" || echo "❌ Failed"
+echo ""
+
+echo "6️⃣  Testing leaderboard with test code..."
+echo "GET $BASE_URL/backend/leaderboard?code=TESTCODE"
+curl -s "$BASE_URL/backend/leaderboard?code=TESTCODE" && echo "" || echo "❌ Failed"
+echo ""
+
 echo "======================================"
 echo "✅ Test complete!"
 echo "======================================"
