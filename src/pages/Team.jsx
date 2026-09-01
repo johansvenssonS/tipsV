@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../lib/AuthContext.jsx";
 import { useToast } from "../lib/ToastContext.jsx";
 import { loginTeam, updateTeam } from "../lib/api.js";
+import { asset } from "../lib/asset.js";
 
 export default function Team() {
   const { currentUser, userCode } = useAuth();
@@ -85,7 +86,7 @@ export default function Team() {
           </p>
           <div className="mt-8 hidden aspect-square items-center justify-center rounded-lg bg-stone-100 p-10 md:flex">
             <img
-              src="/static/icons/taktiktavla.png"
+              src={asset("static/icons/taktiktavla.png")}
               alt="Taktiktavla"
               className="w-full max-w-[180px] object-contain"
             />

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext.jsx";
+import { asset } from "../lib/asset.js";
 
 export default function Landing() {
   const { isLoggedIn } = useAuth();
@@ -49,7 +50,7 @@ export default function Landing() {
         </div>
         <div className="relative -mr-2 hidden aspect-[4/5] items-center justify-center overflow-hidden rounded-lg bg-accent/[0.06] p-10 md:flex">
           <img
-            src="/static/icons/group.jpg"
+            src={asset("static/icons/group.jpg")}
             alt="Vänner samlade för att lägga sitt tips"
             className="w-full max-w-[220px] object-contain"
           />
@@ -59,7 +60,7 @@ export default function Landing() {
       <section className="mt-20 grid grid-cols-1 gap-10 md:grid-cols-[2fr_3fr]">
         <div className="order-2 flex aspect-[4/5] items-center justify-center rounded-lg bg-stone-100 p-10 md:order-1">
           <img
-            src="/static/icons/graph.jpg"
+            src={asset("static/icons/graph.jpg")}
             alt="Statistik över lagets tidigare tips"
             className="w-full max-w-[200px] object-contain"
           />
